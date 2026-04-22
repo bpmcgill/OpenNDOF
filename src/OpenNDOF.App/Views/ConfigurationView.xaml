@@ -1,0 +1,194 @@
+<UserControl x:Class="OpenNDOF.App.Views.ConfigurationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:vm="clr-namespace:OpenNDOF.App.ViewModels"
+             d:DataContext="{d:DesignInstance vm:ConfigurationViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <!-- Reusable style for axis label column -->
+        <Style x:Key="AxisLabel" TargetType="TextBlock">
+            <Setter Property="Width" Value="200"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="AxisValue" TargetType="TextBlock">
+            <Setter Property="Width" Value="60"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
+        </Style>
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,16" MaxWidth="900">
+
+            <!-- Page header -->
+            <TextBlock Text="Configuration"
+                       Style="{StaticResource TitleLargeTextBlockStyle}"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="Per-axis scaling and deadzone settings saved to named profiles"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,20"/>
+
+            <!-- Profile selector row -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Profile" Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,10"/>
+                    <WrapPanel>
+                        <TextBlock Text="Active:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox ItemsSource="{Binding ProfileNames}"
+                                  SelectedItem="{Binding SelectedProfileName}"
+                                  MinWidth="160" Margin="0,0,8,4"/>
+                        <ui:TextBox PlaceholderText="New profile name…"
+                                    Text="{Binding NewProfileName, UpdateSourceTrigger=PropertyChanged}"
+                                    MinWidth="160" Margin="0,0,8,4"/>
+                        <ui:Button Content="Add"    Icon="{ui:SymbolIcon Add24}"
+                                   Command="{Binding AddProfileCommand}" Margin="0,0,4,4"/>
+                        <ui:Button Content="Delete" Icon="{ui:SymbolIcon Delete24}"
+                                   Appearance="Danger"
+                                   Command="{Binding DeleteProfileCommand}" Margin="0,0,16,4"/>
+                        <ui:Button Content="Reset to Defaults" Icon="{ui:SymbolIcon ArrowReset24}"
+                                   Command="{Binding ResetToDefaultsCommand}" Margin="0,0,8,4"/>
+                        <ui:Button Content="Save Profile" Icon="{ui:SymbolIcon Save24}"
+                                   Appearance="Primary"
+                                   Command="{Binding SaveProfileCommand}" Margin="0,0,0,4"/>
+                    </WrapPanel>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Translation scaling -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Translation Sensitivity"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               Margin="0,0,0,12"/>
+                    <!-- TX -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="TX  Scale (Right/Left)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleTx, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleTx, StringFormat=F2}"/>
+                    </Grid>
+                    <!-- TY -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="TY  Scale (Up/Down)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleTy, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleTy, StringFormat=F2}"/>
+                    </Grid>
+                    <!-- TZ -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="TZ  Scale (Fwd/Back)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleTz, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleTz, StringFormat=F2}"/>
+                    </Grid>
+                    <Separator Margin="0,8"/>
+                    <!-- Deadzone Trans -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="Deadzone (Translation)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="0.5"
+                                Value="{Binding DeadzoneTrans, Mode=TwoWay}"
+                                TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding DeadzoneTrans, StringFormat=F2}"/>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Rotation scaling -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="Rotation Sensitivity"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               Margin="0,0,0,12"/>
+                    <!-- RX -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="RX  Scale (Pitch)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleRx, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleRx, StringFormat=F2}"/>
+                    </Grid>
+                    <!-- RY -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="RY  Scale (Yaw)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleRy, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleRy, StringFormat=F2}"/>
+                    </Grid>
+                    <!-- RZ -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="RZ  Scale (Roll)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="5"
+                                Value="{Binding ScaleRz, Mode=TwoWay}" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding ScaleRz, StringFormat=F2}"/>
+                    </Grid>
+                    <Separator Margin="0,8"/>
+                    <!-- Deadzone Rot -->
+                    <Grid Margin="0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Style="{StaticResource AxisLabel}" Text="Deadzone (Rotation)"/>
+                        <Slider Grid.Column="1" Minimum="0" Maximum="0.5"
+                                Value="{Binding DeadzoneRot, Mode=TwoWay}"
+                                TickFrequency="0.05" IsSnapToTickEnabled="True" Margin="8,0"/>
+                        <TextBlock Grid.Column="2" Style="{StaticResource AxisValue}"
+                                   Text="{Binding DeadzoneRot, StringFormat=F2}"/>
+                    </Grid>
+                </StackPanel>
+            </ui:Card>
+
+            <!-- Info tip -->
+            <ui:InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+                        Title="Profiles are stored in %APPDATA%\OpenNDOF\profiles.json"/>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,228 @@
+<UserControl x:Class="OpenNDOF.App.Views.TestInputView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:ctrl="clr-namespace:OpenNDOF.App.Controls"
+             xmlns:vm="clr-namespace:OpenNDOF.App.ViewModels"
+             d:DataContext="{d:DesignInstance vm:TestInputViewModel}"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>  <!-- header -->
+            <RowDefinition Height="Auto"/>  <!-- status bar -->
+            <RowDefinition Height="*"/>     <!-- 3D + axes split -->
+        </Grid.RowDefinitions>
+
+        <!-- Page header -->
+        <StackPanel Grid.Row="0" Margin="24,16,24,4">
+            <TextBlock Text="Test Input"
+                       Style="{StaticResource TitleLargeTextBlockStyle}"
+                       Margin="0,0,0,4"/>
+            <TextBlock Text="Move your 6-DOF device to see the 3-D object respond in real time"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+
+        <!-- Connection status -->
+        <ui:InfoBar Grid.Row="1" Margin="24,8,24,0"
+                    IsOpen="True" IsClosable="False"
+                    Severity="{Binding IsConnected, Converter={StaticResource ConnectedToSeverityConverter}}"
+                    Title="{Binding StatusText}"/>
+
+        <!-- Main content: 3D viewport left, axis panel right -->
+        <Grid Grid.Row="2" Margin="24,8,24,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="280"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- ── 3D Viewport ───────────────────────────────────────── -->
+            <Border Grid.Column="0"
+                    Background="{DynamicResource ApplicationBackgroundBrush}"
+                    BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Margin="0,0,8,0">
+                <Grid>
+                    <Viewport3D ClipToBounds="True">
+                        <Viewport3D.Camera>
+                            <PerspectiveCamera Position="3,2.5,5"
+                                               LookDirection="-0.5,-0.4,-0.8"
+                                               UpDirection="0,1,0"
+                                               FieldOfView="55"/>
+                        </Viewport3D.Camera>
+
+                        <ModelVisual3D>
+                            <ModelVisual3D.Content>
+                                <Model3DGroup>
+                                    <!-- Ambient + key light -->
+                                    <AmbientLight Color="#505050"/>
+                                    <DirectionalLight Color="#FFFFFF" Direction="-1,-1.5,-1"/>
+                                    <DirectionalLight Color="#3060A0" Direction="1,0.5,1"/>
+
+                                    <!-- ── Cube (responds to 6DOF input) ── -->
+                                    <GeometryModel3D>
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D
+                                                Positions="-0.8,-0.5,-0.3  0.8,-0.5,-0.3  0.8,0.5,-0.3  -0.8,0.5,-0.3
+                                                           -0.8,-0.5, 0.3  0.8,-0.5, 0.3  0.8,0.5, 0.3  -0.8,0.5, 0.3"
+                                                TriangleIndices="0,2,1 0,3,2
+                                                                 1,2,6 1,6,5
+                                                                 5,6,7 5,7,4
+                                                                 4,7,3 4,3,0
+                                                                 3,7,6 3,6,2
+                                                                 4,0,1 4,1,5"
+                                                Normals="0,0,-1 0,0,-1 0,0,-1 0,0,-1
+                                                         0,0,1  0,0,1  0,0,1  0,0,1"/>
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <MaterialGroup>
+                                                <DiffuseMaterial Brush="#FF1A6FBF"/>
+                                                <SpecularMaterial Brush="#80FFFFFF" SpecularPower="60"/>
+                                            </MaterialGroup>
+                                        </GeometryModel3D.Material>
+                                        <GeometryModel3D.BackMaterial>
+                                            <DiffuseMaterial Brush="#FF1A4A8A"/>
+                                        </GeometryModel3D.BackMaterial>
+                                        <GeometryModel3D.Transform>
+                                            <Transform3DGroup>
+                                                <RotateTransform3D>
+                                                    <RotateTransform3D.Rotation>
+                                                        <QuaternionRotation3D
+                                                            Quaternion="{Binding CubeRotation}"/>
+                                                    </RotateTransform3D.Rotation>
+                                                </RotateTransform3D>
+                                                <TranslateTransform3D
+                                                    OffsetX="{Binding CubePosX}"
+                                                    OffsetY="{Binding CubePosY}"
+                                                    OffsetZ="{Binding CubePosZ}"/>
+                                            </Transform3DGroup>
+                                        </GeometryModel3D.Transform>
+                                    </GeometryModel3D>
+
+                                    <!-- ── Static axis arrows ── -->
+                                    <!-- X axis (red) -->
+                                    <GeometryModel3D>
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D
+                                                Positions="0,-0.02,-0.02  2,-0.02,-0.02  2,0.02,-0.02  0,0.02,-0.02
+                                                           0,-0.02, 0.02  2,-0.02, 0.02  2,0.02, 0.02  0,0.02, 0.02"
+                                                TriangleIndices="0,2,1 0,3,2  1,2,6 1,6,5  5,6,7 5,7,4  4,7,3 4,3,0  3,7,6 3,6,2  4,0,1 4,1,5"/>
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial Brush="#FFE53935"/>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+                                    <!-- Y axis (green) -->
+                                    <GeometryModel3D>
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D
+                                                Positions="-0.02,0,-0.02  0.02,0,-0.02  0.02,2,-0.02  -0.02,2,-0.02
+                                                           -0.02,0, 0.02  0.02,0, 0.02  0.02,2, 0.02  -0.02,2, 0.02"
+                                                TriangleIndices="0,2,1 0,3,2  1,2,6 1,6,5  5,6,7 5,7,4  4,7,3 4,3,0  3,7,6 3,6,2  4,0,1 4,1,5"/>
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial Brush="#FF43A047"/>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+                                    <!-- Z axis (blue) -->
+                                    <GeometryModel3D>
+                                        <GeometryModel3D.Geometry>
+                                            <MeshGeometry3D
+                                                Positions="-0.02,-0.02,0  0.02,-0.02,0  0.02,0.02,0  -0.02,0.02,0
+                                                           -0.02,-0.02,2  0.02,-0.02,2  0.02,0.02,2  -0.02,0.02,2"
+                                                TriangleIndices="0,2,1 0,3,2  1,2,6 1,6,5  5,6,7 5,7,4  4,7,3 4,3,0  3,7,6 3,6,2  4,0,1 4,1,5"/>
+                                        </GeometryModel3D.Geometry>
+                                        <GeometryModel3D.Material>
+                                            <DiffuseMaterial Brush="#FF1E88E5"/>
+                                        </GeometryModel3D.Material>
+                                    </GeometryModel3D>
+
+                                </Model3DGroup>
+                            </ModelVisual3D.Content>
+                        </ModelVisual3D>
+                    </Viewport3D>
+
+                    <!-- Axis legend overlay -->
+                    <StackPanel HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                                Margin="12" Opacity="0.7">
+                        <StackPanel Orientation="Horizontal">
+                            <Rectangle Width="16" Height="4" Fill="#FFE53935" Margin="0,0,6,0"/>
+                            <TextBlock Text="X" Foreground="#FFE53935" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Rectangle Width="16" Height="4" Fill="#FF43A047" Margin="0,0,6,0"/>
+                            <TextBlock Text="Y" Foreground="#FF43A047" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Rectangle Width="16" Height="4" Fill="#FF1E88E5" Margin="0,0,6,0"/>
+                            <TextBlock Text="Z" Foreground="#FF1E88E5" FontSize="11" FontWeight="Bold"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Reset button -->
+                    <ui:Button HorizontalAlignment="Right" VerticalAlignment="Top"
+                               Margin="12"
+                               Content="Reset View"
+                               Icon="{ui:SymbolIcon ArrowReset24}"
+                               Command="{Binding ResetViewCommand}"/>
+                </Grid>
+            </Border>
+
+            <!-- ── Right panel: live axis values ─────────────────────── -->
+            <StackPanel Grid.Column="1" Margin="0">
+
+                <!-- Translation -->
+                <ui:Card Margin="0,0,0,8">
+                    <StackPanel>
+                        <TextBlock Text="Translation"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                   Margin="0,0,0,8"/>
+                        <ctrl:AxisBar Label="TX (Right/Left)" Value="{Binding BarTx}"
+                                      DisplayText="{Binding LiveTx, StringFormat=F3}"
+                                      BarColor="#FF4CAF50"/>
+                        <ctrl:AxisBar Label="TY (Up/Down)"    Value="{Binding BarTy}"
+                                      DisplayText="{Binding LiveTy, StringFormat=F3}"
+                                      BarColor="#FF2196F3"/>
+                        <ctrl:AxisBar Label="TZ (Fwd/Back)"   Value="{Binding BarTz}"
+                                      DisplayText="{Binding LiveTz, StringFormat=F3}"
+                                      BarColor="#FFFF9800"/>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Rotation -->
+                <ui:Card Margin="0,0,0,8">
+                    <StackPanel>
+                        <TextBlock Text="Rotation"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                   Margin="0,0,0,8"/>
+                        <ctrl:AxisBar Label="RX (Pitch)" Value="{Binding BarRx}"
+                                      DisplayText="{Binding LiveRx, StringFormat=F3}"
+                                      BarColor="#FFE91E63"/>
+                        <ctrl:AxisBar Label="RY (Yaw)"   Value="{Binding BarRy}"
+                                      DisplayText="{Binding LiveRy, StringFormat=F3}"
+                                      BarColor="#FF9C27B0"/>
+                        <ctrl:AxisBar Label="RZ (Roll)"  Value="{Binding BarRz}"
+                                      DisplayText="{Binding LiveRz, StringFormat=F3}"
+                                      BarColor="#FF00BCD4"/>
+                    </StackPanel>
+                </ui:Card>
+
+                <!-- Buttons -->
+                <ui:Card>
+                    <StackPanel>
+                        <TextBlock Text="Buttons"
+                                   Style="{StaticResource BodyStrongTextBlockStyle}"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock Text="{Binding PressedButtons}"
+                                   FontFamily="Consolas"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </ui:Card>
+
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

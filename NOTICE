@@ -1,0 +1,49 @@
+OpenNDOF
+Copyright (c) 2026 Benjamin McGill
+
+---
+
+This product includes work derived from the following open source projects:
+
+## 3dxdisp
+https://github.com/jtsiomb/3dxdisp
+Copyright (c) Ioannis Tsiombikas
+License: GNU General Public License v2
+The LCD HID protocol (report IDs 0x0C, 0x0D, 0x12, page/column addressing,
+bit order) was reverse-engineered and documented by this project. No source
+code was copied; only the protocol knowledge was used to implement
+SpacePilotLcd.cs independently in C#.
+
+## Aerion SpaceNav Win32 Driver (LGPL 2.1)
+License: GNU Lesser General Public License v2.1
+The Win32 HID enumeration and report-reading approach in OpenNDOF.HID
+(SetupDi device enumeration, HidD_* attribute queries, ReadFile input loop,
+DeviceIoControl feature reports) was informed by this driver.
+
+*** IMPORTANT — ACTION REQUIRED ***
+If any source code in OpenNDOF.HID was directly copied or translated from
+the Aerion driver, those files are subject to LGPL 2.1 and must carry the
+notice below. They may NOT be redistributed under the MIT License.
+
+Files that may be affected:
+  src/OpenNDOF.HID/HidController.cs
+  src/OpenNDOF.HID/HidDevice.cs
+  src/OpenNDOF.HID/HidReadThread.cs
+  src/OpenNDOF.HID/DeviceAccess.cs
+  src/OpenNDOF.HID/Native/NativeApi.cs
+
+Required LGPL 2.1 notice for any copied file:
+---------------------------------------------------------------------------
+  This file is derived from the Aerion SpaceNav Win32 Driver.
+  Copyright (C) [original author/year]
+
+  This library is free software; you can redistribute it and/or modify it
+  under the terms of the GNU Lesser General Public License as published by
+  the Free Software Foundation; either version 2.1 of the License, or (at
+  your option) any later version.
+
+  This library is distributed in the hope that it will be useful, but
+  WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+  General Public License for more details.
+---------------------------------------------------------------------------

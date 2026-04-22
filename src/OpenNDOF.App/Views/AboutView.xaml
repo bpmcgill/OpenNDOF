@@ -1,0 +1,73 @@
+<UserControl x:Class="OpenNDOF.App.Views.AboutView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,16" MaxWidth="700">
+
+            <TextBlock Text="OpenNDOF Bridge"
+                       Style="{StaticResource TitleLargeTextBlockStyle}"
+                       Margin="0,0,0,4"/>
+            <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Margin="0,0,0,20">
+                Open-source 6-DOF device driver for legacy 3D input hardware
+            </TextBlock>
+
+            <ui:Card Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8">
+                        What is OpenNDOF Bridge?
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" LineHeight="20">
+                        OpenNDOF Bridge is a free, open-source Windows driver and configuration utility
+                        for 6-degree-of-freedom (6DOF) input devices that are no longer supported by
+                        their original manufacturer.  It lets you keep using quality hardware that would
+                        otherwise end up in landfill simply because corporate support was discontinued.
+                    </TextBlock>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8">
+                        Supported Devices
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">SpaceNavigator, SpaceExplorer, SpacePilot, SpaceTraveler, SpaceBall 5000</TextBlock>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource BodyStrongTextBlockStyle}" Margin="0,0,0,8">
+                        Licence
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap">
+                        OpenNDOF Bridge is released under the GNU Lesser General Public Licence v2.1.
+                        The original HID communication layer and COM-bridge research was derived from
+                        the AerionInput project (Christian Bayer, 2008, Friedrich-Schiller University
+                        of Jena / Bauhaus University of Weimar).  Full licence text is included in the
+                        repository.
+                    </TextBlock>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card>
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon Symbol="Code24" Margin="0,0,10,0"/>
+                    <TextBlock VerticalAlignment="Center">
+                        Source code available at
+                        <Hyperlink NavigateUri="https://github.com/OpenNDOF/OpenNDOF-Bridge"
+                                   RequestNavigate="Hyperlink_RequestNavigate">
+                            github.com/OpenNDOF/OpenNDOF-Bridge
+                        </Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </ui:Card>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

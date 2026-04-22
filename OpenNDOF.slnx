@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OpenNDOF.App/OpenNDOF.App.csproj" />
+    <Project Path="src/OpenNDOF.Core/OpenNDOF.Core.csproj" />
+    <Project Path="src/OpenNDOF.HID/OpenNDOF.HID.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenNDOF.Tests/OpenNDOF.Tests.csproj" />
+  </Folder>
+</Solution>

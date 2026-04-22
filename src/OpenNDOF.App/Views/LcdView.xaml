@@ -1,0 +1,63 @@
+<UserControl x:Class="OpenNDOF.App.Views.LcdView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             Margin="24">
+
+    <StackPanel MaxWidth="600" HorizontalAlignment="Left">
+
+        <ui:TextBlock Text="LCD Display" FontTypography="Title" Margin="0,0,0,4"/>
+        <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                   Text="240×64 monochrome LCD — up to 5 lines, ~36 chars each. Emoji supported 🎮"
+                   TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+        <!-- No device warning -->
+        <ui:InfoBar Title="No SpacePilot detected"
+                    Message="Connect a SpacePilot to use the LCD controls."
+                    Severity="Warning"
+                    IsOpen="{Binding HasLcd, Converter={StaticResource BoolNegConverter}}"
+                    IsClosable="False"
+                    Margin="0,0,0,16"/>
+
+        <!-- Line inputs -->
+        <TextBlock Text="Line 1" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ui:TextBox Text="{Binding Line1, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="First line" IsEnabled="{Binding HasLcd}" Margin="0,0,0,8"/>
+
+        <TextBlock Text="Line 2" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ui:TextBox Text="{Binding Line2, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Second line" IsEnabled="{Binding HasLcd}" Margin="0,0,0,8"/>
+
+        <TextBlock Text="Line 3" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ui:TextBox Text="{Binding Line3, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Third line (optional)" IsEnabled="{Binding HasLcd}" Margin="0,0,0,8"/>
+
+        <TextBlock Text="Line 4" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ui:TextBox Text="{Binding Line4, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Fourth line (optional)" IsEnabled="{Binding HasLcd}" Margin="0,0,0,8"/>
+
+        <TextBlock Text="Line 5" FontWeight="SemiBold" Margin="0,0,0,4"/>
+        <ui:TextBox Text="{Binding Line5, UpdateSourceTrigger=PropertyChanged}"
+                    PlaceholderText="Fifth line (optional)" IsEnabled="{Binding HasLcd}" Margin="0,0,0,16"/>
+
+        <!-- Buttons -->
+        <StackPanel Orientation="Horizontal">
+            <ui:Button Content="Send to Display"
+                       Icon="{ui:SymbolIcon Symbol=Send24}"
+                       Appearance="Primary"
+                       Command="{Binding SendCommand}"
+                       IsEnabled="{Binding HasLcd}"
+                       Margin="0,0,8,0"/>
+            <ui:Button Content="Clear Display"
+                       Icon="{ui:SymbolIcon Symbol=Eraser24}"
+                       Command="{Binding ClearCommand}"
+                       IsEnabled="{Binding HasLcd}"/>
+        </StackPanel>
+
+        <!-- Status -->
+        <TextBlock Text="{Binding StatusMessage}"
+                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                   Margin="0,12,0,0"/>
+
+    </StackPanel>
+</UserControl>
