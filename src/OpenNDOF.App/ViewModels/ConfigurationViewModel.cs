@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using OpenNDOF.Core.Devices;
 using OpenNDOF.Core.Profiles;
 using System.Collections.ObjectModel;
 using Wpf.Ui;
@@ -12,7 +11,6 @@ public sealed partial class ConfigurationViewModel : ObservableObject, IDisposab
 {
     private readonly ProfileManager   _profiles;
     private readonly ISnackbarService _snackbar;
-    private readonly SpaceDevice      _device;
     private          bool             _disposed;
 
     [ObservableProperty] private ObservableCollection<string> _profileNames = [];
@@ -31,11 +29,10 @@ public sealed partial class ConfigurationViewModel : ObservableObject, IDisposab
     [ObservableProperty] private double _scaleRz = 1.0;
     [ObservableProperty] private double _deadzoneRot = 0.0;
 
-    public ConfigurationViewModel(ProfileManager profiles, ISnackbarService snackbar, SpaceDevice device)
+    public ConfigurationViewModel(ProfileManager profiles, ISnackbarService snackbar)
     {
         _profiles = profiles;
         _snackbar = snackbar;
-        _device   = device;
         _profiles.Load();
         RefreshProfileList();
         LoadSelectedProfile();

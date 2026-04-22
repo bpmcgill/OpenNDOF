@@ -18,10 +18,5 @@
     <ProjectReference Include="..\OpenNDOF.Core\OpenNDOF.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="GammaJul.LgLcd.Native64.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
 
-</Project>
+  </Project>

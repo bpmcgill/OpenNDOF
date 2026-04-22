@@ -16,7 +16,6 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     private readonly ProfileManager _profiles;
     private          IHidDevice?    _device;
     private          IHidDevice?    _lcdDevice;
-    private          LgLcdService?  _lcd;
     private          bool           _disposed;
 
     // ── Observable state ─────────────────────────────────────────────────────
@@ -61,7 +60,6 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
             _device.ReportReceived -= OnReportReceived;
             _device = null;
         }
-        _lcd?.Close();
         if (_lcdDevice is not null)
         {
             SpacePilotLcd.Clear(_lcdDevice);
@@ -109,15 +107,7 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
 
         // Write greeting to SpacePilot LCD if present
         if (DeviceInfo.Type == DeviceType.SpacePilot)
-        {
-            if (_lcd is null)
-            {
-                _lcd = new LgLcdService();
-                try   { _lcd.Open("OpenNDOF"); }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[LgLcd] Open() threw: {ex.GetType().Name}: {ex.Message}"); }
-            }
             WriteDisplayLines("OpenNDOF Bridge", "Connected!");
-        }
 
         return true;
     }
@@ -220,15 +210,8 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     public bool WriteDisplayLines(params string[] lines)
     {
         if (DeviceInfo?.Type != DeviceType.SpacePilot) return false;
-
-        // Prefer the direct HID path (reverse-engineered protocol, no external dependency).
         if (_lcdDevice is not null)
             return SpacePilotLcd.WriteText(_lcdDevice, lines);
-
-        // Fall back to Logitech Gaming Software SDK if present.
-        if (_lcd?.IsReady == true && lines.Length >= 2)
-            return _lcd.WriteText(lines[0], lines[1]);
-
         return false;
     }
 
@@ -240,6 +223,5 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
         _disposed = true;
         _hid.DevicesChanged -= OnDevicesChanged;
         Disconnect();
-        _lcd?.Dispose();
     }
 }

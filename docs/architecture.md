@@ -59,8 +59,6 @@ Report dispatch in `OnReportReceived`:
 
 **`SpacePilotLcd`** — internal static class. See [lcd-protocol.md](lcd-protocol.md) for full details.
 
-**`LgLcdService`** — optional fallback that drives the LCD via the Logitech Gaming Software SDK (`lglcd.dll`). Used only when the direct HID path is unavailable.
-
 ### Input
 
 | Class | Description |
@@ -90,7 +88,9 @@ Built with [WPF-UI](https://github.com/lepoco/wpfui) (Fluent design for WPF). DI
 
 ### Service Registration (`App.xaml.cs`)
 
-All services and view-models are registered as singletons. `SpaceDevice` is a singleton and is disposed on application exit. `INavigationViewPageProvider` resolves pages from DI so all views receive their injected VMs automatically.
+All services and view-models are registered as singletons or transients. `SpaceDevice` is a singleton and is disposed on application exit. `INavigationViewPageProvider` resolves pages from DI so all views receive their injected VMs automatically.
+
+`ConfigurationViewModel` receives `ProfileManager` and `ISnackbarService`. `SpaceDevice` is **not** injected into it — profile management is independent of the live device connection.
 
 ---
 

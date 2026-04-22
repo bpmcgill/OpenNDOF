@@ -43,7 +43,7 @@
 ### Build from source
 
 ```powershell
-git clone https://github.com/yourorg/OpenNDOF.git
+git clone https://github.com/bpmcgill/OpenNDOF.git
 cd OpenNDOF
 dotnet build
 ```
