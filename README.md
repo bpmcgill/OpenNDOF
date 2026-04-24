@@ -2,6 +2,27 @@
 
 **OpenNDOF** is an open-source Windows bridge for 3DConnexion 6-DOF (six degrees-of-freedom) input devices. It reads raw HID reports directly — no proprietary driver or SDK required — and exposes live sensor and button data via a clean .NET API and a WPF dashboard application.
 
+
+---
+## Technical Overview
+
+OpenNDOF is a free, open-source Windows application that enables 3DConnexion 6-DOF input devices 
+(SpacePilot, SpaceNavigator, SpaceExplorer, SpaceTraveler, SpaceBall, Aerion NDOF) to work without 
+the proprietary 3DConnexion driver. No installation or activation required — simply plug in your 
+device and use it with AutoCAD, SolidWorks, Blender, Maya, and any other application that supports 
+the TDxInput COM API.
+
+Perfect for users who want to:
+• Resurrect and repurpose legacy 3DConnexion hardware
+• Avoid driver updates and compatibility issues
+• Use their devices on minimal Windows installations
+• Customize sensitivity and macro buttons per-application
+• Contribute to open-source 3D input technology
+
+Features zero-driver architecture, live 6-axis readout, button macros, named profiles with per-axis 
+scaling, SpacePilot LCD display support with full Unicode/emoji rendering, and a clean WPF dashboard 
+for real-time visualization and configuration.
+
 ---
 
 ## Features
