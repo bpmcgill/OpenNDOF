@@ -34,6 +34,23 @@ Native/NativeApi.cs    — SetupDi / HidD imports
 
 ## OpenNDOF.Core
 
+### Com
+
+Implements the TDxInput COM API so any application using `CoCreateInstance("TDxInput.Device")` works transparently with OpenNDOF.
+
+| File | Purpose |
+|---|---|
+| `ComInterfaces.cs` | `[ComVisible]` interface declarations: `ISimpleDevice`, `ISensor`, `IKeyboard`, `ITDxInfo`, `IVector3D`, `IAngleAxis` and their dispinterface event counterparts |
+| `Device.cs` | `TDxInput.Device` CoClass — root object created by host apps; subscribes to `SpaceDevice` and bridges HID events into COM |
+| `Sensor.cs` | `TDxInput.Sensor` — holds live `Vector3D`/`AngleAxis` values; fires `SensorInput` COM event on each motion report |
+| `Keyboard.cs` | `TDxInput.Keyboard` — tracks pressed keys; fires `KeyDown`/`KeyUp` COM events |
+| `ValueTypes.cs` | `Vector3D` and `AngleAxis` COM-visible value objects |
+| `ComServer.cs` | Static singleton owner of `SpaceDevice`; called by `Device` on `Connect()` |
+
+COM hosting is provided by the .NET runtime's `comhost.dll` (enabled via `<EnableComHosting>true</EnableComHosting>`). No manual class-factory code is needed.
+
+Registration is performed by `Register-ComServer.ps1` (repo root), which writes `HKLM\SOFTWARE\Classes\CLSID` and `ProgID` entries pointing at `TDxInput.comhost.dll`.
+
 ### Devices
 
 **`KnownDevices`** — static catalogue mapping `(VendorId, ProductId)` → `SupportedDevice` record + `DeviceType` enum.
@@ -69,6 +86,13 @@ Report dispatch in `OnReportReceived`:
 ### Profiles
 
 `ProfileManager` loads/saves `List<DeviceProfile>` from `%APPDATA%\OpenNDOF\profiles.json` (System.Text.Json). Profiles contain per-axis scale and deadzone values. The `"default"` profile is always present.
+
+**Error Handling:**
+- `Load()` catches specific exception types (JsonException, IOException, ArgumentException) and logs them
+- `Save()` validates profile names and wraps I/O operations in try-catch
+- `Get()` validates input parameter and throws ArgumentException if null/empty
+- `AddOrUpdate()` validates profile before adding
+- See [Error Handling Guide](error-handling.md) for detailed documentation
 
 ---
 

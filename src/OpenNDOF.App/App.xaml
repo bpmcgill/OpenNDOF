@@ -12,6 +12,7 @@
 
             <conv:ConnectedSeverityConverter x:Key="ConnectedToSeverityConverter"/>
             <conv:BoolNegationConverter      x:Key="BoolNegConverter"/>
+            <conv:MacroTypeNotNoneConverter  x:Key="MacroTypeNotNoneConverter"/>
             <BooleanToVisibilityConverter    x:Key="BoolToVis"/>
         </ResourceDictionary>
     </Application.Resources>

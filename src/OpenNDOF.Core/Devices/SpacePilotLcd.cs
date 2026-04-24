@@ -67,6 +67,29 @@ internal static class SpacePilotLcd
         return SendPages(device, pages);
     }
 
+    // Layout constants for the button-grid overlay
+    private const int HeaderHeightPx = 16;   // app-name banner
+    private const int GridRowHeightPx = 16;  // 3 rows × 16px = 48px (total = 64px)
+    private const int ColWidthPx      = 120; // 2 columns × 120px = 240px
+
+    /// <summary>
+    /// Renders the SpacePilot-style overlay: app name banner at the top,
+    /// then a 2-column × 3-row grid for the 6 macro button labels.
+    /// Left column = buttons 1, 3, 5 (indices 0, 2, 4).
+    /// Right column = buttons 2, 4, 6 (indices 1, 3, 5).
+    /// </summary>
+    public static bool WriteButtonGrid(IHidDevice device, string appName, string[] labels)
+    {
+        // Ensure we always have exactly 6 slots
+        var l = new string[6];
+        for (int i = 0; i < 6; i++)
+            l[i] = (labels is not null && i < labels.Length) ? labels[i] : "";
+
+        byte[] flatFb = RenderButtonGrid(appName, l);
+        byte[,] pages = ToPageBuffer(flatFb);
+        return SendPages(device, pages);
+    }
+
     /// <summary>
     /// Renders up to <see cref="MaxLines"/> lines of text (including emoji) to the LCD.
     /// Lines beyond the display capacity are silently truncated.
@@ -79,6 +102,57 @@ internal static class SpacePilotLcd
     }
 
     // ── Rendering ─────────────────────────────────────────────────────────────
+
+    private static byte[] RenderButtonGrid(string appName, string[] l)
+    {
+        using var bmp = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
+        using var g   = Graphics.FromImage(bmp);
+        g.Clear(Color.Black);
+
+        var flags = TextFormatFlags.NoPadding | TextFormatFlags.NoPrefix
+                  | TextFormatFlags.SingleLine | TextFormatFlags.EndEllipsis;
+
+        // ── Header: app name (bold, full width) ──────────────────────────────
+        using var boldFont = new Font(FontFamily, FontSizePx, FontStyle.Bold, GraphicsUnit.Pixel);
+        var headerRect = new Rectangle(0, 0, Width, HeaderHeightPx);
+        // Fill header background to distinguish it from the grid
+        g.FillRectangle(Brushes.White, headerRect);
+        TextRenderer.DrawText(g, appName, boldFont, headerRect,
+            Color.Black, Color.White,
+            flags | TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+
+        // ── Divider line ─────────────────────────────────────────────────────
+        g.DrawLine(Pens.White, 0, HeaderHeightPx, Width, HeaderHeightPx);
+
+        // ── Button grid ──────────────────────────────────────────────────────
+        using var font = new Font(FontFamily, FontSizePx, FontStyle.Regular, GraphicsUnit.Pixel);
+
+        // row r → left button index = r*2, right = r*2+1
+        for (int row = 0; row < 3; row++)
+        {
+            int y = HeaderHeightPx + 1 + row * GridRowHeightPx;
+
+            for (int col = 0; col < 2; col++)
+            {
+                int idx   = row * 2 + col;
+                string lbl = l[idx];
+                string text = string.IsNullOrWhiteSpace(lbl)
+                    ? $"{idx + 1}:"
+                    : $"{idx + 1}: {lbl}";
+
+                int x = col * ColWidthPx + 2;
+                var rect = new Rectangle(x, y, ColWidthPx - 4, GridRowHeightPx - 1);
+                TextRenderer.DrawText(g, text, font, rect,
+                    Color.White, Color.Black, flags | TextFormatFlags.VerticalCenter);
+            }
+
+            // Vertical divider between columns
+            int divX = ColWidthPx;
+            g.DrawLine(Pens.White, divX, HeaderHeightPx + 1, divX, Height - 1);
+        }
+
+        return BitmapToFlatBuffer(bmp);
+    }
 
     /// <summary>
     /// Renders lines of text onto a 240×64 bitmap.

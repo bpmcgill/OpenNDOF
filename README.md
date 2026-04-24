@@ -7,6 +7,7 @@
 ## Features
 
 - **Zero-driver operation** — communicates directly with the HID interface; the 3DConnexion driver does not need to be installed.
+- **TDxInput COM server** — registers as a drop-in replacement for the official 3DConnexion COM server so AutoCAD, SolidWorks, Blender, Maya and any other TDxInput-aware application works transparently.
 - **Live 6-axis readout** — Translation (TX/TY/TZ) and Rotation (RX/RY/RZ) at full device rate.
 - **Button events** — all device buttons reported as a `KeyboardState` snapshot.
 - **Named profiles** — per-axis sensitivity scaling and dead-zone, stored in `%APPDATA%\OpenNDOF\profiles.json`.
@@ -83,6 +84,13 @@ device.Dispose();
 ```
 OpenNDOF.HID          — raw Win32 HID read/write (P/Invoke, no external deps)
 OpenNDOF.Core
+  ├─ Com/
+  │   ├─ ComInterfaces.cs  — [ComVisible] interface definitions (ISimpleDevice, ISensor, IKeyboard…)
+  │   ├─ Device.cs         — TDxInput.Device CoClass (root COM object)
+  │   ├─ Sensor.cs         — TDxInput.Sensor CoClass + SensorInput event
+  │   ├─ Keyboard.cs       — TDxInput.Keyboard CoClass + KeyDown/KeyUp events
+  │   ├─ ValueTypes.cs     — Vector3D / AngleAxis COM value objects
+  │   └─ ComServer.cs      — shared SpaceDevice singleton for COM activation
   ├─ Devices/
   │   ├─ KnownDevices.cs    — VID/PID catalogue + DeviceType enum
   │   ├─ SpaceDevice.cs     — connection, report parsing, profile application
@@ -115,6 +123,46 @@ The 240×64 display is driven with HID feature reports:
 | `0x0D` | `[id, c0…c6]` | Write 7 column bytes; bit 0 = top row of page |
 
 Each page is a horizontal band of 8 pixel rows. Text is rendered with GDI `TextRenderer` (for emoji fallback) to a 32bpp `Bitmap`, thresholded to 1-bit, then packed into the page/column format before transmission.
+
+---
+
+## Using with Other Applications (COM Server)
+
+AutoCAD, SolidWorks, Blender, Maya, and many other 3D applications communicate
+with 3DConnexion devices through the **TDxInput COM API**. OpenNDOF implements
+this API and can be registered as the system-wide COM server so these applications
+receive input from your device through OpenNDOF — **no 3DxWare driver needed**.
+
+### Register (run once, as Administrator)
+
+```powershell
+# From the OpenNDOF.Core build output directory:
+.\Register-ComServer.ps1
+```
+
+This writes the required `HKLM\SOFTWARE\Classes\CLSID` and `ProgID` registry keys
+pointing at `TDxInput.comhost.dll` (the .NET COM host built alongside the project).
+
+### Unregister
+
+```powershell
+.\Register-ComServer.ps1 -Unregister
+```
+
+### How it works
+
+When a host application calls `CoCreateInstance("TDxInput.Device")`, Windows loads
+`TDxInput.comhost.dll` which activates the .NET `Device` COM class. That class
+connects to the shared `SpaceDevice` singleton and forwards live HID data as
+standard `ISensor.SensorInput` and `IKeyboard.KeyDown`/`KeyUp` COM events — exactly
+what the official driver would have sent.
+
+| COM Object | CLSID | Purpose |
+|---|---|---|
+| `TDxInput.Device` | `82C5AB54-...` | Root object; host apps `CoCreateInstance` this |
+| `TDxInput.Sensor` | `85004B00-...` | Fires `SensorInput` with 6-axis data |
+| `TDxInput.Keyboard` | `25BBE090-...` | Fires `KeyDown` / `KeyUp` per button |
+| `TDxInput.TDxInfo` | `1A960ECE-...` | Reports driver revision string |
 
 ---
 
@@ -159,7 +207,19 @@ Profiles are stored in `%APPDATA%\OpenNDOF\profiles.json`.
 
 ---
 
-## Contributing
+## Error Handling and Robustness
+
+OpenNDOF implements comprehensive exception handling to provide a crash-free experience:
+
+- **Profile I/O:** Load failures gracefully recover with defaults; save failures are logged and reported to the user
+- **Input Validation:** Profile names are validated at entry points; invalid inputs fail fast with clear error messages
+- **Macro Execution:** Button press errors are isolated and logged without affecting HID polling
+- **User Feedback:** All user-facing operations provide snackbar notifications (success, error, and detailed messages)
+- **Diagnostics:** Structured debug logging for troubleshooting and development
+
+See [Error Handling Guide](docs/error-handling.md) for detailed documentation on exception strategies and best practices.
+
+---
 
 Pull requests are welcome. Please:
 

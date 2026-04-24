@@ -185,6 +185,164 @@
                 </StackPanel>
             </ui:Card>
 
+            <!-- App names + LCD button labels (SpacePilot) -->
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="LCD Overlay — Application Trigger"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Comma-separated process names that activate this profile (e.g. autocad, acad)"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Margin="0,0,0,8" TextWrapping="Wrap"/>
+                    <ui:TextBox PlaceholderText="Process names, comma-separated…"
+                                Text="{Binding AppNames, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </ui:Card>
+
+            <ui:Card Margin="0,0,0,16">
+                <StackPanel>
+                    <TextBlock Text="LCD Overlay — Button Labels &amp; Macros"
+                               Style="{StaticResource BodyStrongTextBlockStyle}"
+                               Margin="0,0,0,4"/>
+                    <TextBlock Text="Set the LCD label and optional macro action for each of the 6 macro buttons."
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Margin="0,0,0,4" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Margin="0,0,0,12" TextWrapping="Wrap"
+                               Text="SendKeys syntax: ^z = Ctrl+Z  ^{F4} = Ctrl+F4  %{F4} = Alt+F4  {F5} = F5  +s = Shift+S"/>
+
+                    <!-- Header row -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="#"      FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="1" Text="Label"  FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" Text="Action" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                        <TextBlock Grid.Column="3" Text="Keys / Text" FontWeight="SemiBold" VerticalAlignment="Center" Margin="4,0,0,0"/>
+                    </Grid>
+                    <Separator Margin="0,0,0,6"/>
+
+                    <!-- Button 1 (index 0) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="1" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel0, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType0}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys0, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType0, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                    <!-- Button 2 (index 1) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="2" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel1, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType1}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys1, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType1, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                    <!-- Button 3 (index 2) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="3" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel2, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType2}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys2, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType2, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                    <!-- Button 4 (index 3) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="4" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel3, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType3}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys3, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType3, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                    <!-- Button 5 (index 4) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="5" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel4, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType4}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys4, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType4, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                    <!-- Button 6 (index 5) -->
+                    <Grid Margin="0,3">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="28"/>
+                            <ColumnDefinition Width="130"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="6" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                        <ui:TextBox Grid.Column="1" PlaceholderText="Label…"
+                                    Text="{Binding ButtonLabel5, UpdateSourceTrigger=PropertyChanged}"/>
+                        <ComboBox Grid.Column="2" Margin="4,0,0,0"
+                                  ItemsSource="{Binding MacroTypes}"
+                                  SelectedItem="{Binding ActionType5}"/>
+                        <ui:TextBox Grid.Column="3" Margin="4,0,0,0" PlaceholderText="e.g. ^z"
+                                    Text="{Binding ActionKeys5, UpdateSourceTrigger=PropertyChanged}"
+                                    IsEnabled="{Binding ActionType5, Converter={StaticResource MacroTypeNotNoneConverter}}"/>
+                    </Grid>
+
+                </StackPanel>
+            </ui:Card>
+
             <!-- Info tip -->
             <ui:InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
                         Title="Profiles are stored in %APPDATA%\OpenNDOF\profiles.json"/>

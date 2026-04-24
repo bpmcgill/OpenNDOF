@@ -16,6 +16,10 @@ public sealed partial class LcdViewModel : ObservableObject
     [ObservableProperty] private bool   _hasLcd;
     [ObservableProperty] private string _statusMessage = "";
 
+    // ── Overlay status (read-only, updated on foreground changes) ────────────
+    [ObservableProperty] private string _overlayApp     = "—";
+    [ObservableProperty] private string _overlayProfile = "—";
+
     // Display limits — sourced from SpaceDevice which re-exposes the internal SpacePilotLcd constants
     public int MaxLines => SpaceDevice.LcdMaxLines;
     public int MaxChars => SpaceDevice.LcdCharsPerLine;
@@ -29,7 +33,35 @@ public sealed partial class LcdViewModel : ObservableObject
     }
 
     private void UpdateHasLcd()
-        => HasLcd = _device.IsConnected && _device.DeviceInfo?.Type == DeviceType.SpacePilot;
+    {
+        HasLcd = _device.IsConnected && _device.DeviceInfo?.Type == DeviceType.SpacePilot;
+
+        // Subscribe to overlay updates when the overlay service is available
+        if (_device.Overlay is { } overlay)
+            overlay.ForegroundAppChanged -= OnOverlayAppChanged; // avoid double-subscribe
+
+        if (_device.Overlay is { } ov)
+        {
+            ov.ForegroundAppChanged += OnOverlayAppChanged;
+            OverlayApp     = string.IsNullOrEmpty(ov.CurrentApp)    ? "—" : ov.CurrentApp;
+            OverlayProfile = string.IsNullOrEmpty(ov.MatchedProfile) ? "none" : ov.MatchedProfile;
+        }
+        else
+        {
+            OverlayApp     = "—";
+            OverlayProfile = "—";
+        }
+    }
+
+    private void OnOverlayAppChanged(object? sender, string app)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+        {
+            OverlayApp     = string.IsNullOrEmpty(app) ? "—" : app;
+            OverlayProfile = string.IsNullOrEmpty(_device.Overlay?.MatchedProfile)
+                ? "none" : _device.Overlay.MatchedProfile;
+        });
+    }
 
     [RelayCommand]
     private void Send()

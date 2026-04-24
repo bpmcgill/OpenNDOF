@@ -12,11 +12,14 @@ namespace OpenNDOF.Core.Devices;
 /// </summary>
 public sealed class SpaceDevice : ObservableObject, IDisposable
 {
-    private readonly HidController  _hid;
-    private readonly ProfileManager _profiles;
-    private          IHidDevice?    _device;
-    private          IHidDevice?    _lcdDevice;
-    private          bool           _disposed;
+    private readonly HidController      _hid;
+    private readonly ProfileManager     _profiles;
+    private readonly ForegroundAppMonitor _appMonitor;
+    private          LcdOverlayService?  _overlay;
+    private          MacroExecutor?      _macros;
+    private          IHidDevice?         _device;
+    private          IHidDevice?         _lcdDevice;
+    private          bool                _disposed;
 
     // ── Observable state ─────────────────────────────────────────────────────
     private SupportedDevice?  _deviceInfo;
@@ -34,12 +37,19 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     // ── Events ───────────────────────────────────────────────────────────────
     public event EventHandler<SensorState>?   SensorUpdated;
     public event EventHandler<KeyboardState>? KeyboardUpdated;
+    /// <summary>
+    /// Raised once per button press (leading edge only, not on hold or release).
+    /// The argument is the zero-based button index (0–5 for the SpacePilot macro buttons).
+    /// </summary>
+    public event EventHandler<int>?           ButtonPressed;
     public event EventHandler?                ConnectionChanged;
 
     public SpaceDevice(HidController hid, ProfileManager profiles)
     {
-        _hid      = hid;
-        _profiles = profiles;
+        _hid        = hid;
+        _profiles   = profiles;
+        _appMonitor = new ForegroundAppMonitor();
+        _appMonitor.Start();
         _hid.DevicesChanged += OnDevicesChanged;
     }
 
@@ -60,6 +70,15 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
             _device.ReportReceived -= OnReportReceived;
             _device = null;
         }
+        _overlay?.Detach();
+        _overlay?.Dispose();
+        _overlay = null;
+
+        _appMonitor.ForegroundAppChanged -= OnForegroundAppChangedForMacros;
+        _macros?.Detach();
+        _macros?.Dispose();
+        _macros = null;
+
         if (_lcdDevice is not null)
         {
             SpacePilotLcd.Clear(_lcdDevice);
@@ -105,9 +124,20 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
         // feature reports. Reuse _device for LCD writes rather than opening a second handle.
         _lcdDevice = allMatchingInterfaces.Any(d => d.FeatureReportLength >= 8) ? _device : null;
 
-        // Write greeting to SpacePilot LCD if present
-        if (DeviceInfo.Type == DeviceType.SpacePilot)
-            WriteDisplayLines("OpenNDOF Bridge", "Connected!");
+        // Start LCD overlay for SpacePilot
+        if (DeviceInfo.Type == DeviceType.SpacePilot && _lcdDevice is not null)
+        {
+            _overlay = new LcdOverlayService(this, _profiles, _appMonitor);
+            _overlay.Attach();
+        }
+
+        // Start macro executor for all device types
+        _macros = new MacroExecutor(this, _profiles);
+        _macros.Attach();
+        // Keep the executor in sync with whatever the overlay is tracking
+        if (_appMonitor.CurrentApp is { } app)
+            _macros.SetCurrentApp(app);
+        _appMonitor.ForegroundAppChanged += OnForegroundAppChangedForMacros;
 
         return true;
     }
@@ -184,6 +214,11 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
 
         if (pressed.SetEquals(_publishedButtons)) return;
 
+        // Fire ButtonPressed for each button that just went down (leading edge)
+        foreach (int idx in pressed)
+            if (!_publishedButtons.Contains(idx))
+                ButtonPressed?.Invoke(this, idx);
+
         _publishedButtons = [.. pressed];
         var ks = new KeyboardState(_publishedButtons);
         Keyboard = ks;
@@ -215,6 +250,17 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
         return false;
     }
 
+    public bool WriteButtonGrid(string appName, string[] labels)
+    {
+        if (DeviceInfo?.Type != DeviceType.SpacePilot) return false;
+        if (_lcdDevice is not null)
+            return SpacePilotLcd.WriteButtonGrid(_lcdDevice, appName, labels);
+        return false;
+    }
+
+    /// <summary>The overlay service — exposes CurrentApp and MatchedProfile for the UI.</summary>
+    public LcdOverlayService? Overlay => _overlay;
+
     // ── Disposal ─────────────────────────────────────────────────────────────
 
     public void Dispose()
@@ -223,5 +269,9 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
         _disposed = true;
         _hid.DevicesChanged -= OnDevicesChanged;
         Disconnect();
+        _appMonitor.Dispose();
     }
+
+    private void OnForegroundAppChangedForMacros(object? sender, string processName)
+        => _macros?.SetCurrentApp(processName);
 }
