@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore app
+        run: dotnet restore src/OpenNDOF.App/OpenNDOF.App.csproj
+
+      - name: Build app
+        run: dotnet build src/OpenNDOF.App/OpenNDOF.App.csproj --configuration Release --no-restore
+
+      - name: Test (Unit)
+        run: dotnet test tests/OpenNDOF.UnitTests/OpenNDOF.UnitTests.csproj --configuration Release --verbosity normal
+
+      - name: Test (Integration)
+        run: dotnet test tests/OpenNDOF.IntegrationTests/OpenNDOF.IntegrationTests.csproj --configuration Release --verbosity normal
+
+      - name: Test (Other)
+        run: dotnet test tests/OpenNDOF.OtherTests/OpenNDOF.OtherTests.csproj --configuration Release --verbosity normal
