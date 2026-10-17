@@ -21,6 +21,8 @@ public sealed class HidController : IHidController
     private readonly Lock                          _lock    = new();
     private          Guid                          _hidGuid;
     private          HwndSource?                   _msgWindow;
+    private          System.Windows.Threading.Dispatcher? _dispatcher;
+    private          Thread?                       _notifyThread;
     private          nint                          _notifyHandle;
     private          bool                          _disposed;
 
@@ -115,33 +117,57 @@ public sealed class HidController : IHidController
 
     private void InitNotificationWindow()
     {
-        // HwndSource.FromHwnd(0) is not valid; we create a message-only window.
-        var p = new HwndSourceParameters("OpenNDOF-HID-Monitor")
+        // HwndSource requires an STA thread with a message pump. The COM server
+        // is activated with ThreadingModel=Both, so clients may be MTA (console,
+        // PowerShell, ...); the message window must not depend on the caller.
+        _notifyThread = new Thread(NotificationThreadProc)
         {
-            Width = 0, Height = 0,
-            WindowStyle = 0,            // no border
-            ParentWindow = new nint(-3) // HWND_MESSAGE
+            IsBackground = true,
+            Name = "HID-Notification"
         };
-        _msgWindow = new HwndSource(p);
-        _msgWindow.AddHook(WndProc);
+        _notifyThread.SetApartmentState(ApartmentState.STA);
+        _notifyThread.Start();
+    }
 
-        // Register for HID device notifications
-        var filter = new NativeApi.DevBroadcastDeviceInterface
-        {
-            dbcc_devicetype = NativeApi.DBT_DEVTYP_DEVICEINTERFACE,
-            dbcc_classguid  = _hidGuid
-        };
-        filter.dbcc_size = Marshal.SizeOf(filter);
-
-        nint pFilter = Marshal.AllocHGlobal(filter.dbcc_size);
+    private void NotificationThreadProc()
+    {
         try
         {
-            Marshal.StructureToPtr(filter, pFilter, false);
-            _notifyHandle = NativeApi.RegisterDeviceNotification(
-                _msgWindow.Handle, pFilter,
-                (uint)NativeApi.DEVICE_NOTIFY_WINDOW_HANDLE);
+            // HwndSource.FromHwnd(0) is not valid; we create a message-only window.
+            var p = new HwndSourceParameters("OpenNDOF-HID-Monitor")
+            {
+                Width = 0, Height = 0,
+                WindowStyle = 0,            // no border
+                ParentWindow = new nint(-3) // HWND_MESSAGE
+            };
+            _msgWindow = new HwndSource(p);
+            _msgWindow.AddHook(WndProc);
+            _dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+
+            // Register for HID device notifications
+            var filter = new NativeApi.DevBroadcastDeviceInterface
+            {
+                dbcc_devicetype = NativeApi.DBT_DEVTYP_DEVICEINTERFACE,
+                dbcc_classguid  = _hidGuid
+            };
+            filter.dbcc_size = Marshal.SizeOf(filter);
+
+            nint pFilter = Marshal.AllocHGlobal(filter.dbcc_size);
+            try
+            {
+                Marshal.StructureToPtr(filter, pFilter, false);
+                _notifyHandle = NativeApi.RegisterDeviceNotification(
+                    _msgWindow.Handle, pFilter,
+                    (uint)NativeApi.DEVICE_NOTIFY_WINDOW_HANDLE);
+            }
+            finally { Marshal.FreeHGlobal(pFilter); }
+
+            System.Windows.Threading.Dispatcher.Run();
         }
-        finally { Marshal.FreeHGlobal(pFilter); }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[HID] Notification window failed: {ex.Message}");
+        }
     }
 
     private nint WndProc(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
@@ -164,10 +190,22 @@ public sealed class HidController : IHidController
         if (_disposed) return;
         _disposed = true;
 
-        if (_notifyHandle != nint.Zero)
-            NativeApi.UnregisterDeviceNotification(_notifyHandle);
-
-        _msgWindow?.Dispose();
+        // Tear down the notification window on its own STA thread.
+        var dispatcher = _dispatcher;
+        if (dispatcher is not null)
+        {
+            dispatcher.Invoke(() =>
+            {
+                if (_notifyHandle != nint.Zero)
+                {
+                    NativeApi.UnregisterDeviceNotification(_notifyHandle);
+                    _notifyHandle = nint.Zero;
+                }
+                _msgWindow?.Dispose();
+                _msgWindow = null;
+            });
+            dispatcher.InvokeShutdown();
+        }
 
         lock (_lock)
         {
