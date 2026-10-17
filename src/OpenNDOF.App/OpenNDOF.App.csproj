@@ -8,6 +8,7 @@
     <UseWPF>true</UseWPF>
     <!-- Base version; CI overrides with /p:Version (tag or 1.0.0.<run#>). -->
     <Version>1.0.0</Version>
+    <ApplicationIcon>..\assets\logo.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>

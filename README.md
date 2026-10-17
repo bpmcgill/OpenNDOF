@@ -1,5 +1,7 @@
 # OpenNDOF
 
+<img src="assets/logo.png" width="160" alt="OpenNDOF logo">
+
 **OpenNDOF** is an open-source Windows bridge for 3DConnexion 6-DOF (six degrees-of-freedom) input devices. It reads raw HID reports directly — no proprietary driver or SDK required — and exposes live sensor and button data via a clean .NET API and a WPF dashboard application.
 
 
