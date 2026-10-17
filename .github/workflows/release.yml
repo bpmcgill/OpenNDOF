@@ -25,13 +25,18 @@ jobs:
       - name: Restore
         run: dotnet restore src/OpenNDOF.App/OpenNDOF.App.csproj
 
-      - name: Publish app (win-x64)
+      - name: Resolve version
         shell: pwsh
         run: |
           $ver = "${{ github.ref_name }}"
           if ($ver -match '^v\d+\.\d+\.\d+$') { $ver = $ver.Substring(1) }
           else { $ver = "1.0.0.${{ github.run_number }}" }
-          dotnet publish src/OpenNDOF.App/OpenNDOF.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/OpenNDOF-Bridge "/p:Version=$ver"
+          "VERSION=$ver" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publish app (win-x64)
+        shell: pwsh
+        run: |
+          dotnet publish src/OpenNDOF.App/OpenNDOF.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/OpenNDOF-Bridge "/p:Version=$env:VERSION"
 
       - name: Zip publish output
         shell: pwsh
@@ -67,18 +72,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Continuous build roll. The tag is PERMANENT: a tag that has been
-          # attached to a release is immutable — deleting it leaves a tombstone
-          # and recreating it fails with HTTP 422. So: edit the release in
-          # place and clobber its assets; create it only when it does not
-          # exist yet (first run).
-          $title = 'Continuous build (master)'
-          $notes = 'Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically).'
-          gh release edit ci-build --prerelease --title $title --notes $notes 2>$null
-          if ($LASTEXITCODE -ne 0) {
-            gh release create ci-build --prerelease --title $title --notes $notes --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
-          } else {
-            gh release upload ci-build artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe --clobber
+          # One rolling pre-release per build. GitHub blocks ALL in-place
+          # replacement on released builds: tags attached to releases are
+          # immutable (and Tombstoned after deletion), and assets cannot be
+          # deleted/replaced (HTTP 422). So each build gets a UNIQUE tag
+          # (ci-<run#>) and older ci-* releases are pruned afterwards —
+          # unique tags never hit a reuse tombstone.
+          $tag = "ci-${{ github.run_number }}"
+          gh release create $tag --prerelease --title "Continuous build $env:VERSION" --notes "Latest build from master (version $env:VERSION). Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
+          gh release list --limit 50 --json tagName | ConvertFrom-Json | ForEach-Object {
+            if ($_.tagName -like 'ci*' -and $_.tagName -ne $tag) {
+              gh release delete $_.tagName --yes --cleanup-tag 2>$null
+            }
           }
 
       # v* tags produce stable releases with auto-generated release notes.

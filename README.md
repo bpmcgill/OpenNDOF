@@ -76,7 +76,8 @@ and run it. The installer:
 
 Requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
 (the installer checks for it). For a **continuous pre-release** build, the same
-installer is attached to the latest "Continuous build (master)" release.
+installer is attached to the latest versioned Continuous build release
+(e.g. "Continuous build 1.0.0.12").
 
 ### Build from source
 
@@ -110,7 +111,8 @@ fake HID devices; integration tests round-trip profiles through the real
 CI runs on every push/PR to `master`; the release pipeline publishes:
 
 - a rolling **continuous pre-release** of the win-x64 zip after every push to
-  `master` (tag `continuous`), and
+  `master` (tag `ci-build`; titled with its version, e.g. *"Continuous build
+  1.0.0.12"*), and
 - a **stable release** with auto-generated notes for every `v*` tag.
 
 Manual releases can be triggered from the Actions tab (workflow_dispatch).
