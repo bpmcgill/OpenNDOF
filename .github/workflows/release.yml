@@ -67,8 +67,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe `
-            || { gh release delete continuous --yes --cleanup-tag; gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe; }
+          # Roll the continuous release: drop the previous one (ignore if
+          # absent), then publish a fresh prerelease with the current assets.
+          gh release delete continuous --yes --cleanup-tag 2>$null
+          gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
 
       # v* tags produce stable releases with auto-generated release notes.
       - name: Publish stable release
