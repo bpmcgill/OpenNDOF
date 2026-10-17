@@ -30,7 +30,7 @@ public partial class App : Application
 
     private static void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton(_ => HidController.Instance);
+        services.AddSingleton<IHidController>(_ => HidController.Instance);
         services.AddSingleton<ProfileManager>();
         services.AddSingleton<SpaceDevice>();
         services.AddSingleton<INavigationService, NavigationService>();

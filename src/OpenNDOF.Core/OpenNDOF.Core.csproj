@@ -9,11 +9,18 @@
     <UseWindowsForms>true</UseWindowsForms>
     <EnableComHosting>true</EnableComHosting>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- The repo does not enforce XML docs on every member; quiet CS1591 noise. -->
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="System.Drawing.Common" Version="10.0.6" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpenNDOF.UnitTests" />
+    <InternalsVisibleTo Include="OpenNDOF.IntegrationTests" />
+    <InternalsVisibleTo Include="OpenNDOF.OtherTests" />
   </ItemGroup>
 
   <ItemGroup>

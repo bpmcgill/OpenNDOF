@@ -14,11 +14,15 @@ bit order) was reverse-engineered and documented by this project. No source
 code was copied; only the protocol knowledge was used to implement
 SpacePilotLcd.cs independently in C#.
 
-## Aerion SpaceNav Win32 Driver (LGPL 2.1)
+## AerionInput / Aerion SpaceNav Win32 Driver (LGPL 2.1)
 License: GNU Lesser General Public License v2.1
-The Win32 HID enumeration and report-reading approach in OpenNDOF.HID
-(SetupDi device enumeration, HidD_* attribute queries, ReadFile input loop,
-DeviceIoControl feature reports) was informed by this driver.
+The original HID communication layer and COM-bridge research was derived from
+the AerionInput project by Christian Bayer (2008, Friedrich-Schiller
+University of Jena / Bauhaus University of Weimar), as credited in
+OpenNDOF.App/Views/AboutView.xaml. The Win32 HID enumeration and
+report-reading approach in OpenNDOF.HID (SetupDi device enumeration,
+HidD_* attribute queries, ReadFile input loop, DeviceIoControl feature
+reports) was informed by this driver.
 
 *** IMPORTANT — ACTION REQUIRED ***
 If any source code in OpenNDOF.HID was directly copied or translated from
@@ -47,3 +51,10 @@ Required LGPL 2.1 notice for any copied file:
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
   General Public License for more details.
 ---------------------------------------------------------------------------
+
+## hidapi
+https://github.com/libusb/hidapi
+License: BSD-3-Clause / MIT (multi-license upstream)
+The HID output paths in OpenNDOF.HID — interrupt-out writes via WriteFile, and
+the HidD_SetOutputReport / HidD_SetFeature IOCTL fallbacks — were informed by
+this project's approach. No source code was copied.

@@ -71,9 +71,17 @@ public sealed class DeviceProfile
 /// </summary>
 public sealed class ProfileManager
 {
-    private static readonly string _profilePath =
+    private static readonly string _defaultProfilePath =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                      "OpenNDOF", "profiles.json");
+
+    private readonly string _profilePath;
+
+    public ProfileManager() : this(null) { }
+
+    /// <param name="profilePath">Override the profiles.json location (used by tests).</param>
+    public ProfileManager(string? profilePath)
+        => _profilePath = profilePath ?? _defaultProfilePath;
 
     private static readonly JsonSerializerOptions _json = new()
     {

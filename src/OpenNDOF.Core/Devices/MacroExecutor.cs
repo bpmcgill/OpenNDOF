@@ -99,7 +99,7 @@ public sealed class MacroExecutor : IDisposable
     /// Escapes the SendKeys special characters so a literal string is typed.
     /// Special characters: + ^ % ~ ( ) { } [ ]
     /// </summary>
-    private static string EscapeSendKeys(string text)
+    internal static string EscapeSendKeys(string text)
     {
         var sb = new System.Text.StringBuilder(text.Length * 2);
         foreach (char c in text)

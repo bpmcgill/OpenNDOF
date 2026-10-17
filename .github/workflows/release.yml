@@ -2,8 +2,8 @@ name: Release
 
 on:
   push:
-    tags:
-      - "v*"
+    branches: [ master ]
+    tags: [ "v*" ]
   workflow_dispatch:
 
 permissions:
@@ -15,10 +15,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
 
@@ -33,14 +33,24 @@ jobs:
         run: Compress-Archive -Path artifacts/OpenNDOF-Bridge/* -DestinationPath artifacts/OpenNDOF-Bridge-win-x64.zip -Force
 
       - name: Upload workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: OpenNDOF-Bridge-win-x64
           path: artifacts/OpenNDOF-Bridge-win-x64.zip
 
-      - name: Create GitHub release and upload zip
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/OpenNDOF-Bridge-win-x64.zip
-          generate_release_notes: true
+      # Every push to master publishes a rolling pre-release (tag "continuous",
+      # recreated on each build) so testers always have the freshest zip.
+      - name: Publish continuous pre-release
+        if: github.ref == 'refs/heads/master' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: unzip, run OpenNDOF.App.exe; register the COM server with Register-ComServer.ps1 (admin) for CAD apps." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip `
+            || { gh release delete continuous --yes --cleanup-tag; gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: unzip, run OpenNDOF.App.exe; register the COM server with Register-ComServer.ps1 (admin) for CAD apps." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip; }
+
+      # v* tags produce stable releases with auto-generated release notes.
+      - name: Publish stable release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" --generate-notes --title "${{ github.ref_name }}" artifacts/OpenNDOF-Bridge-win-x64.zip

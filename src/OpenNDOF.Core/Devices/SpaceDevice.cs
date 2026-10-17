@@ -12,7 +12,7 @@ namespace OpenNDOF.Core.Devices;
 /// </summary>
 public sealed class SpaceDevice : ObservableObject, IDisposable
 {
-    private readonly HidController      _hid;
+    private readonly IHidController      _hid;
     private readonly ProfileManager     _profiles;
     private readonly ForegroundAppMonitor _appMonitor;
     private          LcdOverlayService?  _overlay;
@@ -44,7 +44,7 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     public event EventHandler<int>?           ButtonPressed;
     public event EventHandler?                ConnectionChanged;
 
-    public SpaceDevice(HidController hid, ProfileManager profiles)
+    public SpaceDevice(IHidController hid, ProfileManager profiles)
     {
         _hid        = hid;
         _profiles   = profiles;
@@ -183,35 +183,24 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     private void ParseTranslationReport(byte[] r)
     {
         var profile = _profiles.Get(ActiveProfile);
-        double tx = ToAxis(r, 1) * profile.ScaleTx;
-        double ty = ToAxis(r, 5) * -profile.ScaleTy;
-        double tz = ToAxis(r, 3) * profile.ScaleTz;
-        _pendingSensor = new SensorState(tx, ty, tz,
-            _pendingSensor.Rx, _pendingSensor.Ry, _pendingSensor.Rz);
+        _pendingSensor = HidReportParser.ParseTranslation(r, profile, _pendingSensor);
         PublishSensor(_pendingSensor);
     }
 
     private void ParseRotationReport(byte[] r)
     {
         var profile = _profiles.Get(ActiveProfile);
-        double rx = ToAxis(r, 1) * profile.ScaleRx;
-        double ry = ToAxis(r, 3) * profile.ScaleRy;
-        double rz = ToAxis(r, 5) * profile.ScaleRz;
-        _pendingSensor = new SensorState(
-            _pendingSensor.Tx, _pendingSensor.Ty, _pendingSensor.Tz, rx, ry, rz);
+        _pendingSensor = HidReportParser.ParseRotation(r, profile, _pendingSensor);
         PublishSensor(_pendingSensor);
     }
 
     private HashSet<int> _publishedButtons = [];
 
     private void ParseButtonReport(byte[] r)
-    {
-        var pressed = new HashSet<int>();
-        for (int byteIdx = 1; byteIdx < r.Length; byteIdx++)
-            for (int bit = 0; bit < 8; bit++)
-                if ((r[byteIdx] & (1 << bit)) != 0)
-                    pressed.Add((byteIdx - 1) * 8 + bit);
+        => UpdateButtons(HidReportParser.ParseButtons(r));
 
+    private void UpdateButtons(IReadOnlySet<int> pressed)
+    {
         if (pressed.SetEquals(_publishedButtons)) return;
 
         // Fire ButtonPressed for each button that just went down (leading edge)
@@ -228,13 +217,6 @@ public sealed class SpaceDevice : ObservableObject, IDisposable
     private void PublishSensor(SensorState s)
     {
         SensorUpdated?.Invoke(this, s);
-    }
-
-    /// <summary>Decode a signed 16-bit little-endian axis value, normalised to ±1.</summary>
-    private static double ToAxis(byte[] r, int offset)
-    {
-        short raw = (short)(r[offset] | (r[offset + 1] << 8));
-        return raw / 350.0; // 350 ≈ typical full-scale for SpaceNavigator family
     }
 
     // ── SpacePilot LCD ───────────────────────────────────────────────────────

@@ -11,7 +11,9 @@ This document describes the internal structure of OpenNDOF for contributors and 
 | `OpenNDOF.HID` | `net10.0-windows` | Raw Win32 HID read/write via P/Invoke |
 | `OpenNDOF.Core` | `net10.0-windows` | Device abstraction, report parsing, profiles, LCD |
 | `OpenNDOF.App` | `net10.0-windows` | WPF dashboard (WPF-UI Fluent design) |
-| `OpenNDOF.Tests` | `net10.0-windows` | xUnit unit tests |
+| `OpenNDOF.UnitTests` | `net10.0-windows` | xUnit unit tests (pure logic, HID fakes) |
+| `OpenNDOF.IntegrationTests` | `net10.0-windows` | xUnit tests touching the real `%APPDATA%` profiles file |
+| `OpenNDOF.OtherTests` | `net10.0-windows` | xUnit model/catalogue behavior tests |
 
 ---
 
@@ -140,13 +142,25 @@ All events are raised on the HID background thread. ViewModels must marshal to t
 
 ## Testing
 
-`OpenNDOF.Tests` uses **xUnit**. `IHidDevice` is the main seam — mock it to inject synthetic HID reports without hardware.
+Unit tests live in `tests/OpenNDOF.UnitTests` using **xUnit**. Two seams make
+the device stack testable without hardware:
+
+- `IHidController` (implemented by the real `HidController` singleton) — inject
+  a `FakeHidController` returning `FakeHidDevice` instances.
+- `HidReportParser` — the pure report-decoding math, directly unit-tested.
+
+`FakeHidDevice.InjectReport(byte[])` simulates a HID report arriving:
 
 ```csharp
-var mock   = new MockHidDevice();
-var device = new SpaceDevice(new MockHidController(mock), new ProfileManager());
+var hid    = new FakeHidController(new FakeHidDevice { VendorId = 0x046D, ProductId = 0xC626 });
+var device = new SpaceDevice(hid, new ProfileManager(tempPath));
+var seen   = System.Collections.Generic.List<OpenNDOF.Core.Input.SensorState>();
+device.SensorUpdated += (_, s) => seen.Add(s);
 device.Connect();
 
-mock.InjectReport(new byte[] { 0x01, 0x60, 0x01, 0x00, 0x00, 0x00, 0x00 });
-Assert.True(device.Sensor.Tx > 0);
+hid.Devices[0].InjectReport(new byte[] { 0x01, 0x5E, 0x01, 0x00, 0x00, 0x00, 0x00 });
+Assert.Equal(1.0, seen[0].Tx);
 ```
+
+`ProfileManager` accepts an optional profile path, so persistence tests use a
+temp file instead of the real `%APPDATA%\OpenNDOF\profiles.json`.

@@ -78,6 +78,27 @@ dotnet run --project src\OpenNDOF.App
 
 Plug in your device, navigate to **Dashboard**, and click **Connect**.
 
+### Run the tests
+
+```powershell
+dotnet test                 # builds the solution and runs all test projects
+dotnet test tests\OpenNDOF.UnitTests --collect:"XPlat Code Coverage"
+```
+
+Unit tests cover report parsing, profiles, and the COM value objects using
+fake HID devices; integration tests round-trip profiles through the real
+`%APPDATA%` file.
+
+### Releases
+
+CI runs on every push/PR to `master`; the release pipeline publishes:
+
+- a rolling **continuous pre-release** of the win-x64 zip after every push to
+  `master` (tag `continuous`), and
+- a **stable release** with auto-generated notes for every `v*` tag.
+
+Manual releases can be triggered from the Actions tab (workflow_dispatch).
+
 ### Use the library in your own app
 
 Add a reference to `OpenNDOF.Core` and `OpenNDOF.HID`:
@@ -122,7 +143,10 @@ OpenNDOF.Core
   └─ Profiles/
       └─ ProfileManager.cs  — JSON persistence, named profiles
 OpenNDOF.App          — WPF UI (WPF-UI / Fluent design)
-OpenNDOF.Tests        — unit tests
+HidProbe          — console tool for dumping raw HID reports
+OpenNDOF.UnitTests    — unit tests (pure logic, fakes for HID)
+OpenNDOF.IntegrationTests — file-backed tests (%APPDATA% profiles)
+OpenNDOF.OtherTests   — model/catalogue behavior tests
 ```
 
 ### HID report format (3DConnexion common protocol)
@@ -245,7 +269,7 @@ See [Error Handling Guide](docs/error-handling.md) for detailed documentation on
 Pull requests are welcome. Please:
 
 - Keep changes focused on a single concern per PR.
-- Add or update unit tests in `OpenNDOF.Tests` for any logic changes.
+- Add or update tests in `tests/OpenNDOF.UnitTests` (pure logic), `tests/OpenNDOF.OtherTests` (models), or `tests/OpenNDOF.IntegrationTests` (file-backed) for any logic changes.
 - Do not commit `%APPDATA%\OpenNDOF\profiles.json` or any generated files under `obj/`.
 
 ---
@@ -258,7 +282,8 @@ The majority of this project is released under the **MIT License** — see [LICE
 
 | Component | License | Notes |
 |---|---|---|
-| `OpenNDOF.HID` | MIT **or** LGPL 2.1 | See [NOTICE](NOTICE) — if any HID enumeration code was derived from the Aerion SpaceNav Win32 driver, those files are LGPL 2.1 |
+| `OpenNDOF.HID` | MIT **or** LGPL 2.1 | See [NOTICE](NOTICE) — the HID communication layer and COM-bridge research were derived from the **AerionInput** project (Christian Bayer, 2008, Friedrich-Schiller University of Jena / Bauhaus University of Weimar); if any HID enumeration code was copied from it, those files are LGPL 2.1 |
 | LCD protocol (SpacePilotLcd.cs) | MIT | Protocol reverse-engineered by [jtsiomb/3dxdisp](https://github.com/jtsiomb/3dxdisp) (GPL v2); no source copied |
+| HID output paths (DeviceAccess.cs, IHidDevice.cs) | — | WriteFile / IOCTL output approach informed by [hidapi](https://github.com/libusb/hidapi) (BSD-3-Clause / MIT); no source copied |
 
-See [NOTICE](NOTICE) for full attribution details.
+See [NOTICE](NOTICE) for full attribution details and required notices.

@@ -95,10 +95,13 @@ See [lcd-protocol.md](lcd-protocol.md) for a detailed breakdown of the SpacePilo
 Run the unit tests:
 
 ```powershell
-dotnet test tests\OpenNDOF.Tests
+dotnet test tests\OpenNDOF.UnitTests
 ```
 
-Add tests in `OpenNDOF.Tests` for any new report-parsing logic. Mock `IHidDevice` is already available in the test project.
+Add tests in `tests\OpenNDOF.UnitTests` for any new report-parsing logic.
+`HidReportParser` holds the pure decoding functions; `FakeHidDevice` /
+`FakeHidController` (in `Fakes.cs`) inject synthetic reports into `SpaceDevice`
+without hardware.
 
 ---
 

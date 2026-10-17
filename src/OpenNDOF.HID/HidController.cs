@@ -9,7 +9,7 @@ namespace OpenNDOF.HID;
 /// Enumerates HID devices and monitors for plug/unplug via a WPF
 /// message-only <see cref="HwndSource"/> — no WinForms dependency.
 /// </summary>
-public sealed class HidController : IDisposable
+public sealed class HidController : IHidController
 {
     private static readonly Lazy<HidController> _instance =
         new(() => new HidController(), LazyThreadSafetyMode.ExecutionAndPublication);

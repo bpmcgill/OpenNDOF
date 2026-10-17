@@ -296,7 +296,7 @@ private void SaveProfile()
 
 ## Testing Strategy
 
-### Unit Tests (`OpenNDOF.Tests/UnitTest1.cs`)
+### Unit Tests (`tests/OpenNDOF.UnitTests`/`OpenNDOF.OtherTests`)
 
 Comprehensive test coverage for all exception paths:
 

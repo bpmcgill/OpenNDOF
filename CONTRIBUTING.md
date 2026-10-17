@@ -176,7 +176,7 @@ See [Error Handling Guide](docs/error-handling.md) for comprehensive documentati
 
 - **All new code paths must have unit tests**
 - **Edge cases and error paths must be tested**
-- Tests should be in `OpenNDOF.Tests`
+- Tests live in `tests/OpenNDOF.UnitTests` (pure logic), `tests/OpenNDOF.OtherTests` (models), and `tests/OpenNDOF.IntegrationTests` (file-backed). Use `FakeHidDevice`/`FakeHidController` (in `Fakes.cs`) to inject synthetic HID reports.
 - Use **xUnit** for test framework
 
 ### Writing Tests
@@ -306,6 +306,29 @@ public DeviceProfile Get(string name)
 
 ---
 
+## Branch Protection & Releases
+
+`master` is protected:
+
+- **Direct pushes are blocked** — all changes go through pull requests.
+- **One approving review required**; CI (`build-test` job) must pass.
+- The repository **owner (admin) can bypass** the rules (`enforce_admins` is off).
+- Merging deletes the branch automatically.
+
+If protection is ever missing, restore it from the repo root:
+
+```powershell
+.\Enable-BranchProtection.ps1   # requires GH_TOKEN (Admin:write scope)
+```
+
+Releases are generated automatically by the `Release` workflow:
+
+- Every push to `master` produces a rolling **continuous pre-release** (tag `continuous`).
+- Pushing a `v*` tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`) produces a **stable release** with auto-generated notes.
+- Manual releases can be triggered from the Actions tab.
+
+---
+
 ## Commit Message Format
 
 Follow conventional commit format:
@@ -355,7 +378,9 @@ OpenNDOF/
 │   ├── OpenNDOF.Core/        — Device logic, profiles, COM API
 │   └── OpenNDOF.App/         — WPF dashboard
 ├── tests/
-│   └── OpenNDOF.Tests/       — xUnit tests
+│   ├── OpenNDOF.UnitTests/      — xUnit unit tests (pure logic, HID fakes)
+│   ├── OpenNDOF.IntegrationTests/ — xUnit tests against %APPDATA% profiles
+│   └── OpenNDOF.OtherTests/     — xUnit model/catalogue behavior tests
 ├── docs/
 │   ├── architecture.md       — Internal structure
 │   ├── error-handling.md     — Exception strategies
