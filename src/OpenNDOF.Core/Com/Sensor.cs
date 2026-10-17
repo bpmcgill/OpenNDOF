@@ -13,12 +13,15 @@ namespace OpenNDOF.Core.Com;
 [Guid("85004B00-1AA7-4777-B1CE-8427301B942D")]
 [ProgId("TDxInput.Sensor")]
 [ComSourceInterfaces(typeof(_ISensorEvents))]
-public sealed class Sensor : ISensor
+public sealed class Sensor : ISensor, ICustomQueryInterface
 {
     private readonly Vector3D  _translation = new();
     private readonly AngleAxis _rotation    = new();
     private          double    _period;
     private          object?   _device;
+
+    // Own connection-point container for the _ISensorEvents outgoing interface.
+    private readonly ConnectionPointContainer _events = new(ComIids.SensorEvents, (1, "SensorInput"));
 
     // ── ISensor ───────────────────────────────────────────────────────────────
     public IVector3D  Translation => _translation;
@@ -43,5 +46,20 @@ public sealed class Sensor : ISensor
 
     [System.Runtime.CompilerServices.MethodImpl(
         System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private void FireSensorInput() => SensorInput?.Invoke();
+    private void FireSensorInput()
+    {
+        SensorInput?.Invoke();
+        _events.Raise(1); // DISPID 1 = SensorInput
+    }
+
+    public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
+    {
+        if (iid == ComIids.IConnectionPointContainer)
+        {
+            ppv = Marshal.GetComInterfaceForObject(_events, typeof(IConnectionPointContainer));
+            return CustomQueryInterfaceResult.Handled;
+        }
+        ppv = IntPtr.Zero;
+        return CustomQueryInterfaceResult.NotHandled;
+    }
 }

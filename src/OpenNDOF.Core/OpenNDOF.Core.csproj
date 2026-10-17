@@ -21,6 +21,7 @@
     <InternalsVisibleTo Include="OpenNDOF.UnitTests" />
     <InternalsVisibleTo Include="OpenNDOF.IntegrationTests" />
     <InternalsVisibleTo Include="OpenNDOF.OtherTests" />
+    <InternalsVisibleTo Include="ComCompatProbe" />
   </ItemGroup>
 
   <ItemGroup>

@@ -209,6 +209,21 @@ what the official driver would have sent.
 | `TDxInput.Keyboard` | `25BBE090-...` | Fires `KeyDown` / `KeyUp` per button |
 | `TDxInput.TDxInfo` | `1A960ECE-...` | Reports driver revision string |
 
+### Compatibility notes
+
+- **SolidWorks, Solid Edge, AutoCAD, Inventor, Maya, …** use the TDxInput COM API
+  and subscribe to sensor/button events through COM connection points. OpenNDOF
+  implements the connection-point machinery itself
+  (`src/OpenNDOF.Core/Com/ConnectionPoints.cs`) and delivers `SensorInput`,
+  `KeyDown`/`KeyUp`, and `DeviceChange` to subscribed clients.
+- **Fusion 360 does not use the TDxInput COM API.** It reads SpaceMouse input
+  via the 3Dconnexion **3D Mouse SDK**, which requires the 3DxWare driver to be
+  installed. A COM-server replacement cannot provide input to Fusion 360 —
+  install 3DxWare for that application.
+- Diagnose a non-working application with
+  `dotnet run --project tools/ComCompatProbe` — it verifies connection-point
+  support and event delivery for all three COM objects.
+
 ---
 
 ## Configuration Profiles

@@ -28,11 +28,14 @@ public sealed class TDxInfo : ITDxInfo
 [Guid("82C5AB54-C92C-4D52-AAC5-27E25E22604C")]
 [ProgId("TDxInput.Device")]
 [ComSourceInterfaces(typeof(_ISimpleDeviceEvents))]
-public sealed class Device : ISimpleDevice, IDisposable
+public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface
 {
     private SpaceDevice? _space;
     private bool         _disposed;
     private DateTime     _lastSensorTime = DateTime.UtcNow;
+
+    // Own connection-point container for the _ISimpleDeviceEvents outgoing interface.
+    private readonly ConnectionPointContainer _events = new(ComIids.SimpleDeviceEvents, (1, "DeviceChange"));
 
     // ── ISimpleDevice properties ──────────────────────────────────────────────
     public Sensor   Sensor      { get; } = new Sensor();
@@ -98,7 +101,22 @@ public sealed class Device : ISimpleDevice, IDisposable
 
     [System.Runtime.CompilerServices.MethodImpl(
         System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private void FireDeviceChange(int reserved) => DeviceChange?.Invoke(reserved);
+    private void FireDeviceChange(int reserved)
+    {
+        DeviceChange?.Invoke(reserved);
+        _events.Raise(1, reserved); // DISPID 1 = DeviceChange
+    }
+
+    public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
+    {
+        if (iid == ComIids.IConnectionPointContainer)
+        {
+            ppv = Marshal.GetComInterfaceForObject(_events, typeof(IConnectionPointContainer));
+            return CustomQueryInterfaceResult.Handled;
+        }
+        ppv = IntPtr.Zero;
+        return CustomQueryInterfaceResult.NotHandled;
+    }
 
     // ── Disposal ──────────────────────────────────────────────────────────────
     public void Dispose()

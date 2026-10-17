@@ -12,10 +12,13 @@ namespace OpenNDOF.Core.Com;
 [Guid("25BBE090-583A-4903-A61B-D0EC629AC4EC")]
 [ProgId("TDxInput.Keyboard")]
 [ComSourceInterfaces(typeof(_IKeyboardEvents))]
-public sealed class Keyboard : IKeyboard
+public sealed class Keyboard : IKeyboard, ICustomQueryInterface
 {
     private          object?            _device;
     private readonly HashSet<int>       _pressed = [];
+
+    // Own connection-point container for the _IKeyboardEvents outgoing interface.
+    private readonly ConnectionPointContainer _events = new(ComIids.KeyboardEvents, (1, "KeyDown"), (2, "KeyUp"));
 
     // ── IKeyboard ─────────────────────────────────────────────────────────────
     public int    Keys             => _pressed.Count;
@@ -54,9 +57,28 @@ public sealed class Keyboard : IKeyboard
 
     [System.Runtime.CompilerServices.MethodImpl(
         System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private void FireKeyDown(int k) => KeyDown?.Invoke(k);
+    private void FireKeyDown(int k)
+    {
+        KeyDown?.Invoke(k);
+        _events.Raise(1, k); // DISPID 1 = KeyDown
+    }
 
     [System.Runtime.CompilerServices.MethodImpl(
         System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private void FireKeyUp(int k) => KeyUp?.Invoke(k);
+    private void FireKeyUp(int k)
+    {
+        KeyUp?.Invoke(k);
+        _events.Raise(2, k); // DISPID 2 = KeyUp
+    }
+
+    public CustomQueryInterfaceResult GetInterface(ref Guid iid, out IntPtr ppv)
+    {
+        if (iid == ComIids.IConnectionPointContainer)
+        {
+            ppv = Marshal.GetComInterfaceForObject(_events, typeof(IConnectionPointContainer));
+            return CustomQueryInterfaceResult.Handled;
+        }
+        ppv = IntPtr.Zero;
+        return CustomQueryInterfaceResult.NotHandled;
+    }
 }
