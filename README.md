@@ -62,6 +62,20 @@ for real-time visualization and configuration.
 
 ## Getting Started
 
+### Install (recommended)
+
+Download **OpenNDOF-Setup.exe** from the latest [release](https://github.com/bpmcgill/OpenNDOF/releases)
+and run it. The installer:
+
+- installs the dashboard,
+- **registers the TDxInput COM server automatically** (no scripts, no manual
+  registry steps), and
+- unregisters it again on uninstall.
+
+Requires the [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0)
+(the installer checks for it). For a **continuous pre-release** build, the same
+installer is attached to the latest "Continuous build (master)" release.
+
 ### Build from source
 
 ```powershell
@@ -178,7 +192,13 @@ with 3DConnexion devices through the **TDxInput COM API**. OpenNDOF implements
 this API and can be registered as the system-wide COM server so these applications
 receive input from your device through OpenNDOF — **no 3DxWare driver needed**.
 
-### Register (run once, as Administrator)
+### Register (production)
+
+The installer registers the COM server automatically — no action needed.
+
+### Register (development builds)
+
+If you built from source, register the development build once, as Administrator:
 
 ```powershell
 # From the OpenNDOF.Core build output directory:
