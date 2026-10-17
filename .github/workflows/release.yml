@@ -72,8 +72,8 @@ jobs:
           # and recreating it fails with HTTP 422. So: edit the release in
           # place and clobber its assets; create it only when it does not
           # exist yet (first run).
-          $title = '"Continuous build (master)"'
-          $notes = '"Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)."'
+          $title = 'Continuous build (master)'
+          $notes = 'Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically).'
           gh release edit ci-build --prerelease --title $title --notes $notes 2>$null
           if ($LASTEXITCODE -ne 0) {
             gh release create ci-build --prerelease --title $title --notes $notes --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
