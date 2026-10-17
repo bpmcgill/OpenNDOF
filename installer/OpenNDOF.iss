@@ -8,8 +8,10 @@
 ; The publish output must exist at artifacts\OpenNDOF-Bridge first.
 
 #define MyAppName "OpenNDOF"
+; The published app exe is the single source of truth for the version
+; (CI sets it via /p:Version). /DAppVersion can still override.
 #ifndef AppVersion
-#define AppVersion "0.0.0"
+#define AppVersion GetFileVersion("..\artifacts\OpenNDOF-Bridge\OpenNDOF.App.exe")
 #endif
 #define MyAppExeName "OpenNDOF.App.exe"
 
@@ -19,6 +21,7 @@ AppName={#MyAppName}
 AppVersion={#AppVersion}
 AppPublisher=OpenNDOF
 AppPublisherURL=https://github.com/bpmcgill/OpenNDOF
+AppSupportURL=https://github.com/bpmcgill/OpenNDOF/issues
 DefaultDirName={autopf}\OpenNDOF
 DefaultGroupName=OpenNDOF
 DisableProgramGroupPage=yes
@@ -28,6 +31,7 @@ Compression=lzma2
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64compatible
 PrivilegesRequired=admin
+UninstallDisplayName={#MyAppName}
 UninstallDisplayIcon={app}\{#MyAppExeName}
 CloseApplications=yes
 RestartApplications=no

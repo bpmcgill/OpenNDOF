@@ -26,7 +26,12 @@ jobs:
         run: dotnet restore src/OpenNDOF.App/OpenNDOF.App.csproj
 
       - name: Publish app (win-x64)
-        run: dotnet publish src/OpenNDOF.App/OpenNDOF.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/OpenNDOF-Bridge
+        shell: pwsh
+        run: |
+          $ver = "${{ github.ref_name }}"
+          if ($ver -match '^v\d+\.\d+\.\d+$') { $ver = $ver.Substring(1) }
+          else { $ver = "1.0.0.${{ github.run_number }}" }
+          dotnet publish src/OpenNDOF.App/OpenNDOF.App.csproj -c Release -r win-x64 --self-contained false -o artifacts/OpenNDOF-Bridge "/p:Version=$ver"
 
       - name: Zip publish output
         shell: pwsh
@@ -40,12 +45,11 @@ jobs:
           if (-not (Test-Path 'artifacts\OpenNDOF-Bridge\TDxInput.runtimeconfig.json')) {
             throw 'Missing artifacts\OpenNDOF-Bridge\TDxInput.runtimeconfig.json — COM activation would fail (0x80008093).'
           }
-          $ver = "${{ github.ref_name }}"
-          if ($ver -notmatch '^v\d+\.\d+\.\d+') { $ver = '0.0.0' } else { $ver = $ver.Substring(1) }
           $is = Join-Path $env:TEMP 'innosetup-install.exe'
           Invoke-WebRequest -Uri 'https://github.com/jrsoftware/issrc/releases/download/is-7_1_0/innosetup-7.1.0-x64.exe' -OutFile $is
           Start-Process -FilePath $is -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART',"/DIR=$env:TEMP\innosetup" -Wait
-          & (Join-Path $env:TEMP 'innosetup\ISCC.exe') installer/OpenNDOF.iss "/DAppVersion=$ver"
+          # AppVersion is read from the published exe via GetFileVersion.
+          & (Join-Path $env:TEMP 'innosetup\ISCC.exe') installer/OpenNDOF.iss
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v7
