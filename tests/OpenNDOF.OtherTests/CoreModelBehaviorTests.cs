@@ -63,6 +63,19 @@ public class CoreModelBehaviorTests
     }
 
     [Fact]
+    public void KnownDevices_TypeCodes_MatchTdxInput()
+    {
+        // TDxInput Device.Type per the 3Dconnexion kd device codes.
+        Assert.Equal(6,  KnownDevices.Match(0x046D, 0xC626)!.TypeCode); // SpaceNavigator
+        Assert.Equal(4,  KnownDevices.Match(0x046D, 0xC627)!.TypeCode); // SpaceExplorer
+        Assert.Equal(29, KnownDevices.Match(0x046D, 0xC625)!.TypeCode); // SpacePilot
+        Assert.Equal(25, KnownDevices.Match(0x046D, 0xC623)!.TypeCode); // SpaceTraveler
+        Assert.Equal(2,  KnownDevices.Match(0x046D, 0xC621)!.TypeCode); // SpaceBall 5000
+        Assert.Equal(2,  KnownDevices.Match(0x046D, 0xC622)!.TypeCode); // SpaceBall 5000 USB
+        Assert.Equal(0,  KnownDevices.Match(0x03EB, 0x2013)!.TypeCode); // Aerion — no official code
+    }
+
+    [Fact]
     public void KnownDevices_Match_UnknownVidPid_ReturnsNull()
     {
         Assert.Null(KnownDevices.Match(0x0000, 0x0000));

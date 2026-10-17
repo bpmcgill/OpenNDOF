@@ -22,8 +22,23 @@ public sealed class Keyboard : IKeyboard, ICustomQueryInterface
 
     // ── IKeyboard ─────────────────────────────────────────────────────────────
     public int    Keys             => _pressed.Count;
-    public int    ProgrammableKeys => 0;
     public object Device           => _device!;
+
+    // Highest button index observed in live reports; -1 until the first report.
+    private int _maxKeyCode = -1;
+
+    /// <summary>
+    /// Programmable keys: the device catalogue's count, refined by the highest
+    /// button index actually observed in reports (max index + 1).
+    /// </summary>
+    public int ProgrammableKeys
+    {
+        get
+        {
+            int fallback = (_device as IComDeviceInfo)?.ProgrammableKeys ?? 0;
+            return _maxKeyCode >= 0 ? Math.Max(fallback, _maxKeyCode + 1) : fallback;
+        }
+    }
 
     public string GetKeyLabel(int keyCode) => keyCode.ToString();
     public string GetKeyName(int keyCode)  => $"Key{keyCode}";
@@ -37,14 +52,19 @@ public sealed class Keyboard : IKeyboard, ICustomQueryInterface
 #pragma warning restore CS0067
 
     // ── Internal update called by Device ──────────────────────────────────────
+    internal void SetDevice(object device) => _device = device;
+
     internal void Update(IReadOnlyCollection<int> nowPressed, object device)
     {
         _device = device;
 
         // Keys newly pressed
         foreach (int k in nowPressed)
+        {
+            if (k > _maxKeyCode) _maxKeyCode = k;
             if (_pressed.Add(k))
                 FireKeyDown(k);
+        }
 
         // Keys released
         var released = _pressed.Where(k => !nowPressed.Contains(k)).ToList();

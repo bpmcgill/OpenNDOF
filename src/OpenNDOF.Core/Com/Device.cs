@@ -16,6 +16,13 @@ public sealed class TDxInfo : ITDxInfo
     public string RevisionNumber() => "10.4.10";   // matches the extracted driver version
 }
 
+/// <summary>Internal capability surface the COM value objects read from the connected device.</summary>
+internal interface IComDeviceInfo
+{
+    int TypeCode { get; }
+    int ProgrammableKeys { get; }
+}
+
 /// <summary>
 /// COM-visible Device object — the root CoClass that host applications create
 /// via <c>CoCreateInstance("TDxInput.Device")</c>.
@@ -28,7 +35,7 @@ public sealed class TDxInfo : ITDxInfo
 [Guid("82C5AB54-C92C-4D52-AAC5-27E25E22604C")]
 [ProgId("TDxInput.Device")]
 [ComSourceInterfaces(typeof(_ISimpleDeviceEvents))]
-public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface
+public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface, IComDeviceInfo
 {
     private SpaceDevice? _space;
     private bool         _disposed;
@@ -40,8 +47,18 @@ public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface
     // ── ISimpleDevice properties ──────────────────────────────────────────────
     public Sensor   Sensor      { get; } = new Sensor();
     public Keyboard Keyboard    { get; } = new Keyboard();
-    public int      Type        => 0;
+    public int      Type        => _space?.DeviceInfo?.TypeCode ?? 0;
     public bool     IsConnected => _space?.IsConnected ?? false;
+
+    // IComDeviceInfo — capability surface for Sensor/Keyboard COM objects.
+    int IComDeviceInfo.TypeCode        => Type;
+    int IComDeviceInfo.ProgrammableKeys => _space?.DeviceInfo?.ProgrammableKeys ?? 0;
+
+    public Device()
+    {
+        // The COM Keyboard needs the owning Device before the first report.
+        Keyboard.SetDevice(this);
+    }
 
     // ── COM event ─────────────────────────────────────────────────────────────
 #pragma warning disable CS0067

@@ -3,6 +3,12 @@ using OpenNDOF.Core.Input;
 
 namespace OpenNDOF.UnitTests;
 
+internal sealed class FakeComDeviceInfo : IComDeviceInfo
+{
+    public int TypeCode { get; init; }
+    public int ProgrammableKeys { get; init; }
+}
+
 public class SensorComTests
 {
     [Fact]
@@ -113,6 +119,47 @@ public class KeyboardComTests
         Assert.Equal("3", keyboard.GetKeyLabel(3));
         Assert.Equal("Key3", keyboard.GetKeyName(3));
         Assert.Equal(0, keyboard.ProgrammableKeys);
+    }
+
+    [Fact]
+    public void ProgrammableKeys_GrowsWithObservedButtons()
+    {
+        var keyboard = new Keyboard();
+
+        Assert.Equal(0, keyboard.ProgrammableKeys);
+
+        keyboard.Update([0, 7], new object());
+
+        Assert.Equal(8, keyboard.ProgrammableKeys);
+    }
+
+    [Fact]
+    public void ProgrammableKeys_CombinesDeviceFallbackAndObservedButtons()
+    {
+        var keyboard = new Keyboard();
+        var info = new FakeComDeviceInfo { TypeCode = 4, ProgrammableKeys = 8 };
+
+        keyboard.SetDevice(info);
+        Assert.Equal(8, keyboard.ProgrammableKeys);
+
+        keyboard.Update([15], info);
+        Assert.Equal(16, keyboard.ProgrammableKeys);
+    }
+
+    [Fact]
+    public void Device_Type_IsZeroWhenNotConnected()
+    {
+        Assert.Equal(0, new Device().Type);
+    }
+
+    [Fact]
+    public void Device_ExposesCapabilities_FromConnectedDevice()
+    {
+        var device = new Device();
+        IComDeviceInfo info = device;
+
+        Assert.Equal(0, info.TypeCode);         // no device connected
+        Assert.Equal(0, info.ProgrammableKeys); // no device connected
     }
 }
 

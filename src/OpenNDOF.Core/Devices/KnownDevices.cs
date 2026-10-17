@@ -5,7 +5,19 @@ public sealed record SupportedDevice(
     int    VendorId,
     int    ProductId,
     string FriendlyName,
-    DeviceType Type);
+    DeviceType Type,
+    /// <summary>
+    /// TDxInput <c>Device.Type</c> value used by COM clients, per the
+    /// 3Dconnexion kd device codes (SpaceNavigator=6, SpaceExplorer=4,
+    /// SpaceTraveler=25, SpacePilot=29, SpaceBall 5000=2, unknown=0).
+    /// </summary>
+    int    TypeCode,
+    /// <summary>
+    /// Number of programmable keys the device reports (TDxInput
+    /// <c>Keyboard.ProgrammableKeys</c>). Used before any button report
+    /// arrives; live reports refine it to the actual maximum key index.
+    /// </summary>
+    int    ProgrammableKeys);
 
 public enum DeviceType
 {
@@ -23,13 +35,13 @@ public static class KnownDevices
 {
     public static IReadOnlyList<SupportedDevice> All { get; } =
     [
-        new(0x046D, 0xC626, "SpaceNavigator",  DeviceType.SpaceNavigator),
-        new(0x046D, 0xC627, "SpaceExplorer",   DeviceType.SpaceExplorer),
-        new(0x046D, 0xC625, "SpacePilot",      DeviceType.SpacePilot),
-        new(0x046D, 0xC623, "SpaceTraveler",   DeviceType.SpaceTraveler),
-        new(0x046D, 0xC621, "SpaceBall 5000",  DeviceType.SpaceBall),
-        new(0x046D, 0xC622, "SpaceBall 5000 USB", DeviceType.SpaceBall),
-        new(0x03EB, 0x2013, "Aerion NDOF",     DeviceType.Aerion),
+        new(0x046D, 0xC626, "SpaceNavigator", DeviceType.SpaceNavigator, 6, 2),
+        new(0x046D, 0xC627, "SpaceExplorer",  DeviceType.SpaceExplorer,  4, 8),
+        new(0x046D, 0xC625, "SpacePilot",     DeviceType.SpacePilot,    29, 6),
+        new(0x046D, 0xC623, "SpaceTraveler",  DeviceType.SpaceTraveler, 25, 2),
+        new(0x046D, 0xC621, "SpaceBall 5000",     DeviceType.SpaceBall,  2, 8),
+        new(0x046D, 0xC622, "SpaceBall 5000 USB", DeviceType.SpaceBall,  2, 8),
+        new(0x03EB, 0x2013, "Aerion NDOF",     DeviceType.Aerion,         0, 0),
     ];
 
     public static SupportedDevice? Match(int vendorId, int productId) =>
