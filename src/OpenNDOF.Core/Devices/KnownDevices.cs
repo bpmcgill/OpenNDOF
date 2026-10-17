@@ -6,17 +6,13 @@ public sealed record SupportedDevice(
     int    ProductId,
     string FriendlyName,
     DeviceType Type,
-    /// <summary>
-    /// TDxInput <c>Device.Type</c> value used by COM clients, per the
-    /// 3Dconnexion kd device codes (SpaceNavigator=6, SpaceExplorer=4,
-    /// SpaceTraveler=25, SpacePilot=29, SpaceBall 5000=2, unknown=0).
-    /// </summary>
+    // TDxInput Device.Type value used by COM clients, per the 3Dconnexion kd
+    // device codes (SpaceNavigator=6, SpaceExplorer=4, SpaceTraveler=25,
+    // SpacePilot=29, SpaceBall 5000=2, unknown=0).
     int    TypeCode,
-    /// <summary>
-    /// Number of programmable keys the device reports (TDxInput
-    /// <c>Keyboard.ProgrammableKeys</c>). Used before any button report
-    /// arrives; live reports refine it to the actual maximum key index.
-    /// </summary>
+    // Number of programmable keys the device reports (TDxInput
+    // Keyboard.ProgrammableKeys). Used before any button report arrives; live
+    // reports refine it to the actual maximum key index.
     int    ProgrammableKeys);
 
 public enum DeviceType

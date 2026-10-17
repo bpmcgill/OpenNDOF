@@ -236,13 +236,44 @@ what the official driver would have sent.
   implements the connection-point machinery itself
   (`src/OpenNDOF.Core/Com/ConnectionPoints.cs`) and delivers `SensorInput`,
   `KeyDown`/`KeyUp`, and `DeviceChange` to subscribed clients.
-- **Fusion 360 does not use the TDxInput COM API.** It reads SpaceMouse input
-  via the 3Dconnexion **3D Mouse SDK**, which requires the 3DxWare driver to be
-  installed. A COM-server replacement cannot provide input to Fusion 360 —
-  install 3DxWare for that application.
+- **Fusion 360 does not use the TDxInput COM API**, and no COM server can make
+  its built-in SpaceMouse feature work — it requires the proprietary 3DxWare
+  driver. **Fusion support is EXPERIMENTAL and partial**: see
+  [Fusion 360 (experimental add-in)](#fusion-360-experimental-add-in) below.
 - Diagnose a non-working application with
   `dotnet run --project tools/ComCompatProbe` — it verifies connection-point
   support and event delivery for all three COM objects.
+
+### Fusion 360 (experimental add-in)
+
+> **Plain statement:** Fusion's built-in SpaceMouse support only works with the
+> official 3DxWare driver. This project cannot enable that built-in feature —
+> instead it ships an **experimental** add-in that drives Fusion's viewport
+> camera directly from the device. It works, but it is **not driver-grade**:
+> the feel is cursor/camera-driven, tuning constants are at the top of the
+> add-in script, and Fusion API updates may break it.
+
+How to use it:
+
+1. Run the bridge (keep it running):
+   ```powershell
+   dotnet run --project tools\SpaceMouseBridge        # or SpaceMouseBridge.exe
+   ```
+   It connects to the device and forwards motion/buttons to `127.0.0.1:39030`.
+2. In Fusion 360: **Tools → Add-Ins … → Add** → select the
+   `fusion/SpacenavBridge` folder → **Run** (enable "run on startup" if you
+   want it auto-loaded).
+3. Move the SpaceMouse. Buttons: button 0 = fit view, button 1 = home.
+
+Plain known limits:
+- Navigation is applied to the viewport camera, not a driver-level input path —
+  expect slightly different smoothness than the official driver.
+- If motion feels too fast/slow/reversed, edit the `*_SCALE` / `*_SIGN`
+  constants in `fusion/SpacenavBridge/SpacenavBridge.py` and restart the add-in.
+- Not covered: settings UI, per-app profiles inside Fusion, Fusion Electronics
+  camera quirks. The add-in applies to the active viewport.
+- The bridge and add-in are intentionally protocol-compatible with
+  [requies/Fusion360-Linux_Spacemouse](https://github.com/requies/Fusion360-Linux_Spacemouse) (MIT).
 
 ---
 

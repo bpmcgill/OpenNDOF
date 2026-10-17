@@ -1,0 +1,13 @@
+{
+    "autodeskProduct": "Fusion",
+    "type": "addin",
+    "id": "330fb1e8-30fa-4c08-95b3-4e092d42bba9",
+    "author": "OpenNDOF",
+    "description": {
+        "": "EXPERIMENTAL — receives SpaceMouse motion from the OpenNDOF SpaceMouseBridge (localhost UDP) and drives the active Fusion viewport camera."
+    },
+    "version": "1.0.0",
+    "runOnStartup": true,
+    "supportedOS": "windows",
+    "editEnabled": true
+}
