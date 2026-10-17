@@ -1,3 +1,4 @@
+using System.IO;
 using System.Runtime.InteropServices;
 
 // ComTestHarness — a real TDxInput COM client, exactly like SolidWorks.
@@ -10,6 +11,11 @@ using System.Runtime.InteropServices;
 // Usage:  ComTestHarness [seconds]     (default 8)
 // Exit:   0 = healthy; 1 = server reachable but event delivery broken;
 //         2 = TDxInput.Device not registered.
+//
+// Member access is done via IDispatch (dynamic), like a scripted client,
+// because same-process CCW interop unwraps returned objects to their managed
+// types — typed interface casts across assemblies fail on those even when the
+// COM IIDs match. Connection points are driven by raw IID/pointer QI instead.
 
 int failures = 0;
 void Check(string label, bool ok)
@@ -28,7 +34,23 @@ if (t is null)
     Console.WriteLine("         cd <build output>; .\\Register-ComServer.ps1");
     Environment.Exit(2);
 }
-var device = (ISimpleDevice)Activator.CreateInstance(t)!;
+
+// The ProgID may still be registered while the installed comhost is missing
+// (e.g. an interrupted uninstall) — fail fast with a clear message instead of
+// the cryptic 0x8007007E from CoCreateInstance.
+string? comhost = (string?)Microsoft.Win32.Registry.GetValue(
+    @"HKEY_LOCAL_MACHINE\SOFTWARE\Classes\CLSID\{82C5AB54-C92C-4D52-AAC5-27E25E22604C}\InprocServer32",
+    "", null);
+if (string.IsNullOrEmpty(comhost) || !File.Exists(comhost))
+{
+    Console.WriteLine(comhost is null
+        ? "FAIL - TDxInput.Device is registered but the comhost value is missing."
+        : $"FAIL - TDxInput.Device is registered at '{comhost}' but that file does not exist.");
+    Console.WriteLine("       Re-run the OpenNDOF installer (OpenNDOF-Setup.exe) and retry.");
+    Environment.Exit(2);
+}
+
+dynamic device = Activator.CreateInstance(t)!;
 Console.WriteLine("PASS - activated TDxInput.Device through the registered comhost");
 
 // ── 2. Capabilities ─────────────────────────────────────────────────────────
@@ -40,10 +62,12 @@ device.Connect();
 Console.WriteLine($"      after Connect(): IsConnected = {device.IsConnected}");
 
 // ── 4. Subscribe to COM events via connection points ───────────────────────
+dynamic sensor = device.Sensor;
+dynamic keyboard = device.Keyboard;
 var sensorSink = new SensorSink();
 var keyboardSink = new KeyboardSink();
-AttachEvents("Sensor", device.Sensor, typeof(ISensor), sensorSink, TdxIids.SensorEvents, typeof(_ISensorEvents));
-AttachEvents("Keyboard", device.Keyboard, typeof(IKeyboard), keyboardSink, TdxIids.KeyboardEvents, typeof(_IKeyboardEvents));
+AttachEvents("Sensor", (object)sensor, sensorSink, TdxIids.SensorEvents, typeof(_ISensorEvents));
+AttachEvents("Keyboard", (object)keyboard, keyboardSink, TdxIids.KeyboardEvents, typeof(_IKeyboardEvents));
 
 // ── 5. Live readout ─────────────────────────────────────────────────────────
 int seconds = args.Length > 0 && int.TryParse(args[0], out int s) ? s : 8;
@@ -53,7 +77,6 @@ var deadline = DateTime.UtcNow.AddSeconds(seconds);
 string? last = null;
 while (DateTime.UtcNow < deadline)
 {
-    var sensor = device.Sensor;
     var tvec = sensor.Translation;
     var rvec = sensor.Rotation;
     string line = $"T({tvec.X,7:0.00},{tvec.Y,7:0.00},{tvec.Z,7:0.00}) " +
@@ -82,13 +105,14 @@ Console.WriteLine(failures == 0
     : $"RESULT: {failures} check(s) failed — see above.");
 Environment.Exit(failures == 0 ? 0 : 1);
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
+// ── Helper ──────────────────────────────────────────────────────────────────
 
-void AttachEvents(string name, object source, Type sourceIface, object sink,
-                  Guid eventIid, Type sinkIface)
+void AttachEvents(string name, object source, object sink, Guid eventIid, Type sinkIface)
 {
-    nint pSource = Marshal.GetComInterfaceForObject(source, sourceIface);
-    nint pSink   = Marshal.GetComInterfaceForObject(sink, sinkIface);
+    // Get any COM pointer to the source object (IDispatch QI always succeeds on
+    // the CCW), then QI for IConnectionPointContainer and subscribe.
+    nint pSource = Marshal.GetComInterfaceForObject(source, typeof(IDispatchMarker));
+    nint pSink = Marshal.GetComInterfaceForObject(sink, sinkIface);
     try
     {
         Guid iidCpc = TdxIids.ConnectionPointContainer;
@@ -135,6 +159,16 @@ public sealed class KeyboardSink : _IKeyboardEvents
 
 // ── COM identifiers ─────────────────────────────────────────────────────────
 
+/// <summary>Any ComImport interface with the IDispatch IID — used only to QI
+/// a CCW for IDispatch (member access itself is via dynamic).</summary>
+[ComImport]
+[Guid("00020400-0000-0000-C000-000000000046")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+public interface IDispatchMarker
+{
+    void Dummy();
+}
+
 internal static class TdxIids
 {
     public static readonly Guid ConnectionPointContainer = new("B196B286-BAB4-101A-B69C-00AA00341D07");
@@ -142,70 +176,7 @@ internal static class TdxIids
     public static readonly Guid KeyboardEvents = new("6B6BB0A8-4491-40CF-B1A9-C15A801FE151");
 }
 
-// ── TDxInput interfaces (official IIDs, mirror of 3DxInput.tlb) ─────────────
-// Dual interfaces are consumed (ComImport); event interfaces are implemented
-// (plain ComVisible sinks) — mirroring how the original 3DxInput.h is used.
-
-[ComImport]
-[Guid("CB3BF65E-0816-482A-BB11-64AF1E837812")]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-public interface ISimpleDevice
-{
-    void Connect();
-    void Disconnect();
-    ISensor Sensor { get; }
-    IKeyboard Keyboard { get; }
-    int Type { get; }
-    bool IsConnected { get; }
-    void LoadPreferences(string registryPath);
-}
-
-[ComImport]
-[Guid("F3A6775E-6FA1-4829-BF32-5B045C29078F")]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-public interface ISensor
-{
-    IVector3D Translation { get; }
-    IAngleAxis Rotation { get; }
-    object Device { get; }
-    double Period { get; }
-}
-
-[ComImport]
-[Guid("D6F968E7-2993-48D7-AF24-8B602D925B2C")]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-public interface IKeyboard
-{
-    int Keys { get; }
-    int ProgrammableKeys { get; }
-    string GetKeyLabel(int keyCode);
-    string GetKeyName(int keyCode);
-    object Device { get; }
-    bool IsKeyDown(int keyCode);
-    bool IsKeyUp(int keyCode);
-}
-
-[ComImport]
-[Guid("8C2AA71D-2B23-43F5-A6ED-4DF57E9CD8D5")]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-public interface IVector3D
-{
-    double X { get; set; }
-    double Y { get; set; }
-    double Z { get; set; }
-    double Length { get; set; }
-}
-
-[ComImport]
-[Guid("1EF2BAFF-54E9-4706-9F61-078F7134FD35")]
-[InterfaceType(ComInterfaceType.InterfaceIsDual)]
-public interface IAngleAxis
-{
-    double X { get; set; }
-    double Y { get; set; }
-    double Z { get; set; }
-    double Angle { get; set; }
-}
+// ── Event sink interfaces (official IIDs) and connection points ─────────────
 
 [ComVisible(true)]
 [Guid("E6929A4A-6F41-46C6-9252-A8CC53472CB1")]

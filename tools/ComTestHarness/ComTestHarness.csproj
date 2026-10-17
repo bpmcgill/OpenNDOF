@@ -3,6 +3,11 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
+    <!-- The COM component's runtimeconfig requires Microsoft.WindowsDesktop.App;
+         without this the harness process has only Microsoft.NETCore.App loaded,
+         and in-process comhost activation fails with 0x800080A5
+         ("framework not present in the previously loaded runtime"). -->
+    <UseWPF>true</UseWPF>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ComTestHarness</AssemblyName>
