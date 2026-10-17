@@ -35,6 +35,11 @@ jobs:
       - name: Build installer (Inno Setup)
         shell: pwsh
         run: |
+          # The COM host cannot activate without TDxInput.runtimeconfig.json
+          # beside it — fail fast rather than ship a broken installer.
+          if (-not (Test-Path 'artifacts\OpenNDOF-Bridge\TDxInput.runtimeconfig.json')) {
+            throw 'Missing artifacts\OpenNDOF-Bridge\TDxInput.runtimeconfig.json — COM activation would fail (0x80008093).'
+          }
           $ver = "${{ github.ref_name }}"
           if ($ver -notmatch '^v\d+\.\d+\.\d+') { $ver = '0.0.0' } else { $ver = $ver.Substring(1) }
           $is = Join-Path $env:TEMP 'innosetup-install.exe'
