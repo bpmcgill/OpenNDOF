@@ -67,10 +67,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Roll the continuous release: drop the previous one (ignore if
-          # absent), then publish a fresh prerelease with the current assets.
-          gh release delete continuous --yes --cleanup-tag 2>$null
-          gh release create continuous --prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}" artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
+          # Roll the continuous release IN PLACE. The 'continuous' tag is
+          # immutable once attached to a release (deleting/recreating it is
+          # rejected with HTTP 422), so: edit the existing release, then
+          # clobber its assets with the fresh build; create it on first run.
+          $flags = '--prerelease --title "Continuous build (master)" --notes "Latest build from master. Install: run OpenNDOF-Setup.exe (registers the COM server automatically)." --target "${{ github.sha }}"'
+          gh release edit continuous $flags 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create continuous $flags artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe
+          } else {
+            gh release upload continuous artifacts/OpenNDOF-Bridge-win-x64.zip artifacts/OpenNDOF-Setup.exe --clobber
+          }
 
       # v* tags produce stable releases with auto-generated release notes.
       - name: Publish stable release
