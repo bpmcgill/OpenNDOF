@@ -234,6 +234,10 @@ def _apply_motion(viewport, motion):
         return
 
     camera = viewport.camera
+    # Disable Fusion's camera transition animation FIRST — if it stays on,
+    # every assignment lerps from a stale pose and the view "springs back"
+    # when motion stops.
+    camera.isSmoothTransition = False
     eye = list(camera.eye.asArray())
     target = list(camera.target.asArray())
     up = _v_normalize(list(camera.upVector.asArray()), [0.0, 1.0, 0.0])
@@ -280,7 +284,6 @@ def _apply_motion(viewport, motion):
     camera.eye = adsk.core.Point3D.create(eye[0], eye[1], eye[2])
     camera.target = adsk.core.Point3D.create(target[0], target[1], target[2])
     camera.upVector = adsk.core.Vector3D.create(up[0], up[1], up[2])
-    camera.isSmoothTransition = False
     viewport.camera = camera
     viewport.refresh()
 
