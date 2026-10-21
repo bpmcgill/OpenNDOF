@@ -9,7 +9,11 @@ namespace OpenNDOF.Core.Com;
 /// </summary>
 internal static class ComTrace
 {
-    private static readonly string _path = Path.Combine(Path.GetTempPath(), "OpenNDOF-trace.log");
+    /// <summary>Tracing target. Overridable for tests; production default is
+    /// %TEMP%\OpenNDOF-trace.log.</summary>
+    internal static string TraceFile { get; set; } =
+        Path.Combine(Path.GetTempPath(), "OpenNDOF-trace.log");
+
     private static readonly object _lock = new();
     private static int _sensorEvents;
 
@@ -19,7 +23,7 @@ internal static class ComTrace
         {
             lock (_lock)
             {
-                File.AppendAllText(_path,
+                File.AppendAllText(TraceFile,
                     $"{DateTime.UtcNow:u} [pid {Environment.ProcessId} thr {Thread.CurrentThread.ManagedThreadId}] {message}{Environment.NewLine}");
             }
         }
