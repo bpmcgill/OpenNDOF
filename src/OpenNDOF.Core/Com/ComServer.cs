@@ -30,6 +30,7 @@ public static class ComServer
         lock (_lock)
         {
             if (_device is not null) return _device;
+            ComTrace.Write("ComServer.GetDevice(): first call — initializing");
             _profiles = new ProfileManager();
             _profiles.Load();
             _device   = new SpaceDevice(HidController.Instance, _profiles);

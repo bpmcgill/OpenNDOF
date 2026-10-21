@@ -56,6 +56,7 @@ public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface, 
 
     public Device()
     {
+        ComTrace.Write("Device created");
         // The COM Keyboard needs the owning Device before the first report.
         Keyboard.SetDevice(this);
     }
@@ -73,12 +74,14 @@ public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface, 
     /// </summary>
     public void Connect()
     {
+        ComTrace.Write("Device.Connect() called");
         if (_space is not null) return;
 
         // Obtain the singleton SpaceDevice via the static accessor on ComServer.
         _space = ComServer.GetDevice();
         if (_space is null) return;
 
+        ComTrace.Write($"Device.Connect(): server IsConnected = {_space.IsConnected}");
         _space.SensorUpdated   += OnSensor;
         _space.KeyboardUpdated += OnKeyboard;
         _space.ConnectionChanged += OnConnectionChanged;
@@ -86,11 +89,13 @@ public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface, 
         if (!_space.IsConnected)
             _space.Connect();
 
+        ComTrace.Write($"Device.Connect(): after connect IsConnected = {_space.IsConnected}");
         FireDeviceChange(0);
     }
 
     public void Disconnect()
     {
+        ComTrace.Write("Device.Disconnect() called");
         if (_space is null) return;
         _space.SensorUpdated   -= OnSensor;
         _space.KeyboardUpdated -= OnKeyboard;
@@ -105,6 +110,7 @@ public sealed class Device : ISimpleDevice, IDisposable, ICustomQueryInterface, 
 
     private void OnSensor(object? sender, OpenNDOF.Core.Input.SensorState s)
     {
+        ComTrace.SensorEvent();
         double period = (DateTime.UtcNow - _lastSensorTime).TotalSeconds;
         _lastSensorTime = DateTime.UtcNow;
         Sensor.Update(s, period, this);
