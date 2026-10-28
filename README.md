@@ -235,11 +235,15 @@ what the official driver would have sent.
 
 ### Compatibility notes
 
-- **SolidWorks, Solid Edge, AutoCAD, Inventor, Maya, …** use the TDxInput COM API
-  and subscribe to sensor/button events through COM connection points. OpenNDOF
-  implements the connection-point machinery itself
-  (`src/OpenNDOF.Core/Com/ConnectionPoints.cs`) and delivers `SensorInput`,
-  `KeyDown`/`KeyUp`, and `DeviceChange` to subscribed clients.
+- **Classic TDxInput COM API clients (older AutoCAD-family apps)** — supported.
+  OpenNDOF implements the connection-point machinery itself
+  (`src/OpenNDOF.Core/Com/ConnectionPoints.cs`) so event-driven clients receive
+  `SensorInput`, `KeyDown`/`KeyUp`, and `DeviceChange`; verified end-to-end with
+  `ComTestHarness`.
+- **SolidWorks (tested 2016 and 2022)** — its 3Dconnexion support is **gated on
+  the 3DxWare driver**: without it, SolidWorks never even loads the TDxInput COM
+  server (verified via the activation trace). A COM replacement cannot serve
+  SolidWorks; install 3DxWare for it (note 3DxWare only supports recent devices).
 - **Fusion 360 does not use the TDxInput COM API**, and no COM server can make
   its built-in SpaceMouse feature work — it requires the proprietary 3DxWare
   driver. **Fusion support is EXPERIMENTAL and partial**: see
