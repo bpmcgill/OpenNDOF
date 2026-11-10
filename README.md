@@ -243,7 +243,9 @@ what the official driver would have sent.
 - **SolidWorks (tested 2016 and 2022)** — its 3Dconnexion support is **gated on
   the 3DxWare driver**: without it, SolidWorks never even loads the TDxInput COM
   server (verified via the activation trace). A COM replacement cannot serve
-  SolidWorks; install 3DxWare for it (note 3DxWare only supports recent devices).
+  SolidWorks through it. **SolidWorks support is EXPERIMENTAL**, through a
+  separate add-in: see
+  [SolidWorks (experimental add-in)](#solidworks-experimental-add-in) below.
 - **Fusion 360 does not use the TDxInput COM API**, and no COM server can make
   its built-in SpaceMouse feature work — it requires the proprietary 3DxWare
   driver. **Fusion support is EXPERIMENTAL and partial**: see
@@ -282,6 +284,52 @@ Plain known limits:
   camera quirks. The add-in applies to the active viewport.
 - The bridge and add-in are intentionally protocol-compatible with
   [requies/Fusion360-Linux_Spacemouse](https://github.com/requies/Fusion360-Linux_Spacemouse) (MIT).
+
+### SolidWorks (experimental add-in)
+
+> **Plain statement:** SolidWorks' built-in 3D-mouse support is the 3DxWare
+> driver's own add-in; SolidWorks never calls the TDxInput COM server. The
+> **experimental** add-in in `solidworks/` takes that role: it runs inside
+> SolidWorks, reads the device over raw HID and drives the active view's camera
+> through the SolidWorks API. Verified with a SpaceNavigator on SolidWorks 2026
+> (rev 34.4); it is **not driver-grade**.
+
+How to use it (SolidWorks must be installed — the build needs its interop DLLs):
+
+1. Build:
+   ```powershell
+   dotnet build solidworks\OpenNDOF.SolidWorks -c Release
+   ```
+   SolidWorks installed elsewhere? Add
+   `-p:SolidWorksApiDir="<SOLIDWORKS>\api\redist"`.
+2. Close SolidWorks, then install the add-in for the current user:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File solidworks\Install-SolidWorksAddin.ps1
+   ```
+   Expect one UAC prompt: SolidWorks lists per-user (HKCU) add-ins but only
+   loads at startup those registered under `HKLM\SOFTWARE\SolidWorks\Addins`.
+3. Start SolidWorks: **Tools → Add-Ins** lists **OpenNDOF SpaceMouse**, loaded
+   at startup. Open a part or assembly and move the device.
+   Buttons: button 0 = zoom to fit, button 1 = isometric view + fit.
+
+Tuning, both applied live (within a second, no restart):
+- Per-axis sensitivity and dead zones: the OpenNDOF dashboard's
+  **Configuration** page. The add-in uses the profile whose app names contain
+  `sldworks`, else the `default` profile (read from `%APPDATA%\OpenNDOF\profiles.json`
+  after **Save Profile**).
+- Global speeds, axis mapping, filtering, cross-talk suppression:
+  `%LOCALAPPDATA%\OpenNDOF\SolidWorks\SpaceMouse.cfg` (documented in the file).
+  Pan speed is relative to the view width, so it feels the same at any zoom.
+
+Log: `OpenNDOF.SolidWorks.log` in the same folder.
+Uninstall: `Install-SolidWorksAddin.ps1 -Uninstall`.
+
+Plain known limits:
+- Only the foreground SolidWorks window is driven; camera calls cost a few ms
+  each, so motion is smooth but not identical to 3DxWare.
+- Buttons beyond 0 and 1 are not mapped.
+- The add-in opens the device in shared mode, so it runs alongside the OpenNDOF
+  dashboard. It is not part of `OpenNDOF.slnx`, CI, or the installer.
 
 ---
 
